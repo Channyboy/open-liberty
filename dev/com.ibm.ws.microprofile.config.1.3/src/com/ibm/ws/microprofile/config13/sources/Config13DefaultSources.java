@@ -11,15 +11,27 @@
 package com.ibm.ws.microprofile.config13.sources;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.microprofile.config.spi.ConfigSource;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import com.ibm.ws.microprofile.config.sources.DefaultSources;
 import com.ibm.ws.microprofile.config.sources.SystemConfigSource;
 
+@Component(service = Config13DefaultSources.class, immediate = true)
 public class Config13DefaultSources extends DefaultSources {
 
+    //private static ConfigSource configSource = null;
+
+    private static List<ConfigSource> listOfConfigSources = new ArrayList<ConfigSource>();
+
     /**
+     * s
      * The classloader's loadResources method is used to locate resources of
      * name {#link ConfigConstants.CONFIG_PROPERTIES} as well as process environment
      * variables and Java System.properties
@@ -37,7 +49,21 @@ public class Config13DefaultSources extends DefaultSources {
         sources.add(new ServerXMLDefaultVariableConfigSource());
 
         sources.addAll(getPropertiesFileConfigSources(classloader));
+        if (!listOfConfigSources.isEmpty())
+            sources.addAll(listOfConfigSources);
 
         return sources;
     }
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+    protected synchronized void setConfigSource(ConfigSource configSource) {
+        //Config13DefaultSources.configSource = configSource;
+        listOfConfigSources.add(configSource);
+    }
+
+    protected synchronized void unsetConfigSource(ConfigSource configSource) {
+        //Config13DefaultSources.configSource = null;
+        listOfConfigSources.remove(configSource);
+    }
+
 }
