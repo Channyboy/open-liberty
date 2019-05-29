@@ -58,7 +58,6 @@ import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
 
 import com.ibm.ws.ffdc.annotation.FFDCIgnore;
-import com.ibm.ws.threadContext.ComponentMetaDataAccessorImpl;
 
 /**
  * A registry of metric instances.
@@ -70,7 +69,7 @@ public class MetricRegistryImpl extends MetricRegistry {
     protected final ConcurrentMap<String, Metadata> metadata;
     protected final ConcurrentMap<MetricID, Metric> metricsMID;
     protected final ConcurrentMap<String, Metadata> metadataMID;
-    protected final ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> applicationMap;
+    protected final ConcurrentHashMap<String, ConcurrentLinkedQueue<MetricID>> applicationMap;
     private final ConfigProviderResolver configResolver;
 
     /**
@@ -86,7 +85,7 @@ public class MetricRegistryImpl extends MetricRegistry {
         this.metadata = new ConcurrentHashMap<String, Metadata>(); //duped
         this.metadataMID = new ConcurrentHashMap<String, Metadata>();
 
-        this.applicationMap = new ConcurrentHashMap<String, ConcurrentLinkedQueue<String>>();
+        this.applicationMap = new ConcurrentHashMap<String, ConcurrentLinkedQueue<MetricID>>();
 
         this.configResolver = configResolver;
     }
@@ -226,7 +225,7 @@ public class MetricRegistryImpl extends MetricRegistry {
         } catch (NoSuchElementException e) {
             //Continue if there is no global tags
         }
-        MetricID MetricID = new MetricID(metadata.getName(), tags); //test
+        MetricID MetricID = new MetricID(metadata.getName(), tags);
 
         Class<T> metricClass = determineMetricClass(metric);
         validateMetricNameToSingleType(MetricID.getName(), metricClass);
@@ -240,47 +239,43 @@ public class MetricRegistryImpl extends MetricRegistry {
             throw new IllegalArgumentException("A metric named " + MetricID.getName() + " with tags " + MetricID.getTagsAsString() + " already exists");
         }
 
-        addNameToApplicationMap(metadata.getName());
+        addNameToApplicationMap(MetricID);
         return metric;
     }
 
     /**
-     * Adds the metric name to an application map.
+     * Adds the MetricID to an application map.
      * This map is not a complete list of metrics owned by an application,
      * produced metrics are managed in the MetricsExtension
      *
      * @param name
      */
-    protected void addNameToApplicationMap(String name) {
+    protected void addNameToApplicationMap(MetricID metricID) {
         String appName = getApplicationName();
-
         // If it is a base metric, the name will be null
         if (appName == null)
             return;
-        ConcurrentLinkedQueue<String> list = applicationMap.get(appName);
+        ConcurrentLinkedQueue<MetricID> list = applicationMap.get(appName);
         if (list == null) {
-            ConcurrentLinkedQueue<String> newList = new ConcurrentLinkedQueue<String>();
+            ConcurrentLinkedQueue<MetricID> newList = new ConcurrentLinkedQueue<MetricID>();
             list = applicationMap.putIfAbsent(appName, newList);
             if (list == null)
                 list = newList;
         }
-        list.add(name);
+        list.add(metricID);
+
+    }
+
+    public void unRegisterApplicationMetrics() {
+        unRegisterApplicationMetrics(getApplicationName());
     }
 
     public void unRegisterApplicationMetrics(String appName) {
-        ConcurrentLinkedQueue<String> list = applicationMap.remove(appName);
-        if (list != null) {
-            for (String metricName : list) {
-                remove(metricName);
-            }
-        }
-    }
+        ConcurrentLinkedQueue<MetricID> list = applicationMap.remove(appName);
 
-    public void unRegisterApplicationMetricsMetricID(String appName) {
-        ConcurrentLinkedQueue<String> list = applicationMap.remove(appName);
         if (list != null) {
-            for (String metricName : list) {
-                remove(metricName);
+            for (MetricID metricID : list) {
+                remove(metricID);
             }
         }
     }
@@ -294,17 +289,6 @@ public class MetricRegistryImpl extends MetricRegistry {
             }
         }
         return null;
-    }
-
-    private String getApplicationNamev2() {
-        String appName = null;
-        try {
-            ComponentMetaDataAccessorImpl cmdai = ComponentMetaDataAccessorImpl.getComponentMetaDataAccessor();
-            appName = cmdai.getComponentMetaData().getModuleMetaData().getName();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return appName;
     }
 
     /**
@@ -469,13 +453,6 @@ public class MetricRegistryImpl extends MetricRegistry {
      */
     @Override
     public boolean remove(String name) {
-        //        final Metric metric = metrics.remove(name);
-        //        metadata.remove(name);
-        //        if (metric != null) {
-        //            return true;
-        //        }
-        //return false;
-
         Iterator<Entry<MetricID, Metric>> iterator = metricsMID.entrySet().iterator();
 
         while (iterator.hasNext()) {
@@ -492,11 +469,13 @@ public class MetricRegistryImpl extends MetricRegistry {
 
     /** {@inheritDoc} */
     @Override
-    public boolean remove(MetricID MetricID) {
-        final Metric metric = metricsMID.remove(MetricID);
-        String name = MetricID.getName();
+    public boolean remove(MetricID metricID) {
+        final Metric metric = metricsMID.remove(metricID);
+        String name = metricID.getName();
+
         if (metric != null) {
             boolean isLastOne = true;
+
             for (MetricID mid : metricsMID.keySet()) {
                 if (mid.getName().equals(name)) {
                     isLastOne = false;
