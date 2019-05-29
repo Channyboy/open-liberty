@@ -21,7 +21,7 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
 import com.ibm.ws.microprofile.metrics.ApplicationListener;
 import com.ibm.ws.threadContext.ComponentMetaDataAccessorImpl;
 
-@Component(service = { MetricAppNameConfigSource.class }, configurationPid = "com.ibm.ws.microprofile.metrics.config", configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true, property = { "service.vendor=IBM" })
+@Component(service = { ConfigSource.class }, configurationPid = "com.ibm.ws.microprofile.metrics.config", configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true, property = { "service.vendor=IBM" })
 public class MetricAppNameConfigSource implements ConfigSource {
 
     private static final String METRICS_APPNAME_CONFIG_KEY = "mp.metrics.appName";
@@ -29,12 +29,6 @@ public class MetricAppNameConfigSource implements ConfigSource {
     private static final int CONFIG_ORDINAL = 80;
 
     private static Map<String, String> applicationContextRootMap = new HashMap<String, String>();
-
-    {
-        System.out.println("Creating Config Source normal metrics 2.0");
-        System.out.println(">>>>>Config Source TCCl " + Thread.currentThread().getContextClassLoader());
-        System.out.println(">>>>>>Config Source CL " + getClass().getClassLoader());
-    }
 
     @Override
     public int getOrdinal() {
@@ -58,11 +52,18 @@ public class MetricAppNameConfigSource implements ConfigSource {
 
     @Override
     public String getValue(String propertyName) {
-        System.out.println("Config Source is being retrieved");
         if (propertyName.equals(METRICS_APPNAME_CONFIG_KEY)) {
 
-            String appName = resolveApplicationName();
-            String contextRoot = ApplicationListener.contextRoot_Map.get(appName);
+            String appName = null;
+            String contextRoot = null;
+            appName = resolveApplicationName();
+            contextRoot = ApplicationListener.contextRoot_Map.get(appName);
+
+            //perhaps its a WAR in a EAR?
+            if (contextRoot == null) {
+                String moduleName = resolveModuleName();
+                contextRoot = ApplicationListener.contextRoot_Map.get(appName + "#" + moduleName);
+            }
             if (contextRoot != null) {
                 return contextRoot;
             }
@@ -74,10 +75,25 @@ public class MetricAppNameConfigSource implements ConfigSource {
         String appName = null;
         try {
             ComponentMetaDataAccessorImpl cmdai = ComponentMetaDataAccessorImpl.getComponentMetaDataAccessor();
-            appName = cmdai.getComponentMetaData().getModuleMetaData().getName();
+            appName = cmdai.getComponentMetaData().getModuleMetaData().getJ2EEName().getApplication();
+        } catch (NullPointerException e) {
         } catch (Exception e) {
-            e.printStackTrace();
         }
         return appName;
     }
+
+    private String resolveModuleName() {
+        String moduleName = null;
+        try {
+            ComponentMetaDataAccessorImpl cmdai = ComponentMetaDataAccessorImpl.getComponentMetaDataAccessor();
+            moduleName = cmdai.getComponentMetaData().getModuleMetaData().getName();
+        } catch (NullPointerException e) {
+        } catch (Exception e) {
+        }
+        return moduleName;
+    }
+
+    //prolly a webmodulemetadata
+    //glen marcy - modulemetadata to webmoduleinfo
+    //also get app name#modulemetadata combine appname + module name
 }
