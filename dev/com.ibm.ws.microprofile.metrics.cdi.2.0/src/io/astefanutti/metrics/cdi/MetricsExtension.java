@@ -26,6 +26,8 @@ package io.astefanutti.metrics.cdi;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Member;
 import java.lang.reflect.Type;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,6 +63,10 @@ import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.eclipse.microprofile.metrics.annotation.Gauge;
 import org.eclipse.microprofile.metrics.annotation.Metered;
 import org.eclipse.microprofile.metrics.annotation.Timed;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -68,9 +74,15 @@ import com.ibm.ws.cdi.extension.WebSphereCDIExtension;
 import com.ibm.ws.microprofile.metrics.cdi.helper.Utils;
 import com.ibm.ws.microprofile.metrics.cdi.producer.MetricRegistryFactory;
 import com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries;
+import com.ibm.ws.threadContext.ComponentMetaDataAccessorImpl;
+import com.ibm.wsspi.classloading.ClassLoadingService;
+import com.ibm.wsspi.kernel.service.utils.AtomicServiceReference;
 
 @Component(service = WebSphereCDIExtension.class, immediate = true)
 public class MetricsExtension implements Extension, WebSphereCDIExtension {
+    private static final String REFERENCE_CLASSLOADING_SERVICE = "classLoadingService";
+
+    private final AtomicServiceReference<ClassLoadingService> classLoadingServiceSR = new AtomicServiceReference<ClassLoadingService>(REFERENCE_CLASSLOADING_SERVICE);
 
     private static final AnnotationLiteral<Nonbinding> NON_BINDING = new AnnotationLiteral<Nonbinding>() {};
 
@@ -82,6 +94,8 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
 
     private final Map<Bean<?>, AnnotatedMember<?>> metrics = new HashMap<>();
     private final Set<String> metricNames = Collections.synchronizedSortedSet(new TreeSet<String>());
+
+    public static Map<String, Data> AppNameXProducerElement = new HashMap<>();
 
     private final MetricsConfigurationEvent configuration = new MetricsConfigurationEvent();
 
@@ -123,13 +137,15 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
             abd.addBean(new MetricRegistryBean(manager));
     }
 
-    private void configuration(@Observes AfterDeploymentValidation adv, BeanManager manager) {
+    @SuppressWarnings("unchecked")
+    private <T extends Metric> void configuration(@Observes AfterDeploymentValidation adv, BeanManager manager) {
+
         // Fire configuration event
         manager.fireEvent(configuration);
         configuration.unmodifiable();
 
-        // Produce and register custom metrics
         MetricRegistry registry = getReference(manager, MetricRegistry.class);
+
         MetricName name = getReference(manager, MetricName.class);
         for (Map.Entry<Bean<?>, AnnotatedMember<?>> bean : metrics.entrySet()) {
             // TODO: add MetricSet metrics into the metric registry
@@ -142,10 +158,30 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
             Metadata metadata = name.metadataOf(bean.getValue());
             String[] tags = name.tagOf(bean.getValue());
 
-            registry.register(metadata, (Metric) getReference(manager, bean.getValue().getBaseType(), bean.getKey()), Utils.tagsToTags(tags));
+            ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
+
+            final Bundle bundle = FrameworkUtil.getBundle(ClassLoadingService.class);
+            ClassLoadingService thingthing = AccessController.doPrivileged(new PrivilegedAction<ClassLoadingService>() {
+                @Override
+                public ClassLoadingService run() {
+                    BundleContext bCtx = bundle.getBundleContext();
+                    ServiceReference<ClassLoadingService> svcRef = bCtx.getServiceReference(ClassLoadingService.class);
+                    return svcRef == null ? null : bCtx.getService(svcRef);
+                }
+            });
+
+            try {
+
+                ClassLoader tccl = thingthing.createThreadContextClassLoader(origLoader);
+                Thread.currentThread().setContextClassLoader(tccl);
+
+                registry.register(metadata, (Metric) getReference(manager, bean.getValue().getBaseType(), bean.getKey()), Utils.tagsToTags(tags)); // line 190
+            } finally {
+                Thread.currentThread().setContextClassLoader(origLoader);
+            }
+//            registry.register(metadata, (Metric) getReference(manager, bean.getValue().getBaseType(), bean.getKey()), Utils.tagsToTags(tags)); // line 190
             addMetricName(metadata.getName());
         }
-
         // Let's clear the collected metric producers
         metrics.clear();
     }
@@ -154,7 +190,8 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
         MetricRegistry registry = MetricRegistryFactory.getApplicationRegistry();
         // Unregister metrics
         for (String name : metricNames) {
-            registry.remove(name);
+
+            //registry.unRegisterApplicationMetrics(name);
         }
     }
 
@@ -201,5 +238,16 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
 
     public void addMetricName(String name) {
         metricNames.add(name);
+    }
+
+    private String resolveApplicationName() {
+        String appName = null;
+        try {
+            ComponentMetaDataAccessorImpl cmdai = ComponentMetaDataAccessorImpl.getComponentMetaDataAccessor();
+            appName = cmdai.getComponentMetaData().getModuleMetaData().getName();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return appName;
     }
 }
