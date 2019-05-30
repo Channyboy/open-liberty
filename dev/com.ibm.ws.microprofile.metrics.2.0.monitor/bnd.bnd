@@ -14,8 +14,8 @@ bVersion=1.0
 javac.source: 1.8
 javac.target: 1.8
 
-Bundle-Name: com.ibm.ws.microprofile.metrics.monitor.2.0
-Bundle-SymbolicName: com.ibm.ws.microprofile.metrics.monitor.2.0
+Bundle-Name: com.ibm.ws.microprofile.metrics.2.0.monitor
+Bundle-SymbolicName: com.ibm.ws.microprofile.metrics.2.0.monitor
 Bundle-Description: MicroProfile Metrics Monitor Bridge Auto Feature, version ${bVersion}
 
 Import-Package: \
