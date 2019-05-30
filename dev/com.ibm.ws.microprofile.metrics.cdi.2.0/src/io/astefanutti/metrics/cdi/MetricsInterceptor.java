@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corporation and others.
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -105,7 +105,8 @@ import com.ibm.ws.microprofile.metrics.cdi.producer.MetricRegistryFactory;
                 MetricResolver.Of<Gauge> gauge = resolver.gauge(bean, method);
                 if (gauge.isPresent()) {
                     registry.register(gauge.metadata(), new ForwardingGauge(method, context.getTarget()), Utils.tagsToTags(gauge.tags()));
-                    extension.addMetricName(gauge.metricName());
+                    MetricID mid = new MetricID(gauge.metadata().getName(), Utils.tagsToTags(gauge.tags()));
+                    extension.addMetricID(mid);
                 }
             }
             type = type.getSuperclass();
@@ -118,25 +119,29 @@ import com.ibm.ws.microprofile.metrics.cdi.producer.MetricRegistryFactory;
         MetricResolver.Of<Counted> counted = resolver.counted(bean, element);
         if (counted.isPresent()) {
             registry.counter(counted.metadata(), Utils.tagsToTags(counted.tags()));
-            extension.addMetricName(element, counted.metricAnnotation(), counted.metadata().getName());
+            MetricID mid = new MetricID(counted.metadata().getName(), Utils.tagsToTags(counted.tags()));
+            extension.addMetricID(element, counted.metricAnnotation(), mid);
         }
 
         MetricResolver.Of<ConcurrentGauge> concurrentGauge = resolver.concurentGauged(bean, element);
         if (concurrentGauge.isPresent()) {
             registry.concurrentGauge(concurrentGauge.metadata(), Utils.tagsToTags(concurrentGauge.tags()));
-            extension.addMetricName(element, concurrentGauge.metricAnnotation(), concurrentGauge.metadata().getName());
+            MetricID mid = new MetricID(concurrentGauge.metadata().getName(), Utils.tagsToTags(concurrentGauge.tags()));
+            extension.addMetricID(element, concurrentGauge.metricAnnotation(), mid);
         }
 
         MetricResolver.Of<Metered> metered = resolver.metered(bean, element);
         if (metered.isPresent()) {
             registry.meter(metered.metadata(), Utils.tagsToTags(metered.tags()));
-            extension.addMetricName(element, metered.metricAnnotation(), metered.metadata().getName());
+            MetricID mid = new MetricID(metered.metadata().getName(), Utils.tagsToTags(metered.tags()));
+            extension.addMetricID(element, metered.metricAnnotation(), mid);
         }
 
         MetricResolver.Of<Timed> timed = resolver.timed(bean, element);
         if (timed.isPresent()) {
             registry.timer(timed.metadata(), Utils.tagsToTags(timed.tags()));
-            extension.addMetricName(element, timed.metricAnnotation(), timed.metadata().getName());
+            MetricID mid = new MetricID(timed.metadata().getName(), Utils.tagsToTags(timed.tags()));
+            extension.addMetricID(element, timed.metricAnnotation(), mid);
         }
     }
 

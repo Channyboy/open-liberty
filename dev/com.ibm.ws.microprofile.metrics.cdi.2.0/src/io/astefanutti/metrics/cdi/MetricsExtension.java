@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corporation and others.
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -57,6 +57,7 @@ import javax.interceptor.InterceptorBinding;
 
 import org.eclipse.microprofile.metrics.Metadata;
 import org.eclipse.microprofile.metrics.Metric;
+import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.annotation.ConcurrentGauge;
 import org.eclipse.microprofile.metrics.annotation.Counted;
@@ -74,16 +75,10 @@ import com.ibm.ws.cdi.extension.WebSphereCDIExtension;
 import com.ibm.ws.microprofile.metrics.cdi.helper.Utils;
 import com.ibm.ws.microprofile.metrics.cdi.producer.MetricRegistryFactory;
 import com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries;
-import com.ibm.ws.threadContext.ComponentMetaDataAccessorImpl;
 import com.ibm.wsspi.classloading.ClassLoadingService;
-import com.ibm.wsspi.kernel.service.utils.AtomicServiceReference;
 
 @Component(service = WebSphereCDIExtension.class, immediate = true)
 public class MetricsExtension implements Extension, WebSphereCDIExtension {
-    private static final String REFERENCE_CLASSLOADING_SERVICE = "classLoadingService";
-
-    private final AtomicServiceReference<ClassLoadingService> classLoadingServiceSR = new AtomicServiceReference<ClassLoadingService>(REFERENCE_CLASSLOADING_SERVICE);
-
     private static final AnnotationLiteral<Nonbinding> NON_BINDING = new AnnotationLiteral<Nonbinding>() {};
 
     private static final AnnotationLiteral<InterceptorBinding> INTERCEPTOR_BINDING = new AnnotationLiteral<InterceptorBinding>() {};
@@ -93,7 +88,8 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
     private static final AnnotationLiteral<Default> DEFAULT = new AnnotationLiteral<Default>() {};
 
     private final Map<Bean<?>, AnnotatedMember<?>> metrics = new HashMap<>();
-    private final Set<String> metricNames = Collections.synchronizedSortedSet(new TreeSet<String>());
+
+    private final Set<MetricID> metricIDs = Collections.synchronizedSortedSet(new TreeSet<MetricID>());
 
     public static Map<String, Data> AppNameXProducerElement = new HashMap<>();
 
@@ -179,19 +175,19 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
             } finally {
                 Thread.currentThread().setContextClassLoader(origLoader);
             }
-//            registry.register(metadata, (Metric) getReference(manager, bean.getValue().getBaseType(), bean.getKey()), Utils.tagsToTags(tags)); // line 190
-            addMetricName(metadata.getName());
+            MetricID mid = new MetricID(metadata.getName(), Utils.tagsToTags(tags));
+            addMetricID(mid);
         }
-        // Let's clear the collected metric producers
+
+        //Clear the collected metric producers
         metrics.clear();
     }
 
     private void beforeShutdown(@Observes BeforeShutdown shutdown) {
         MetricRegistry registry = MetricRegistryFactory.getApplicationRegistry();
         // Unregister metrics
-        for (String name : metricNames) {
-
-            //registry.unRegisterApplicationMetrics(name);
+        for (MetricID mid : metricIDs) {
+            registry.remove(mid);
         }
     }
 
@@ -222,32 +218,23 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
         return map.get(annotation);
     }
 
-    public void addMetricName(Member member, Annotation annotation, String name) {
+    public void addMetricID(Member member, Annotation annotation, MetricID mid) {
         Map<Annotation, String> map = memberMap.get(member);
+        String name = mid.getName();
         if (map == null) {
             map = Collections.synchronizedMap(new HashMap<Annotation, String>());
             memberMap.put(member, map);
         }
         map.put(annotation, name);
-        metricNames.add(name);
+        metricIDs.add(mid);
+    }
+
+    public void addMetricID(MetricID mid) {
+        metricIDs.add(mid);
     }
 
     public Set<Class<?>> getBeansVisited() {
         return beansVisited;
     }
 
-    public void addMetricName(String name) {
-        metricNames.add(name);
-    }
-
-    private String resolveApplicationName() {
-        String appName = null;
-        try {
-            ComponentMetaDataAccessorImpl cmdai = ComponentMetaDataAccessorImpl.getComponentMetaDataAccessor();
-            appName = cmdai.getComponentMetaData().getModuleMetaData().getName();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return appName;
-    }
 }
