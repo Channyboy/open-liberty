@@ -23,7 +23,7 @@
 /**
  * <p>
  * This package contains the annotations used for MicroProfile Metrics.
- * 
+ *
  * <h2>Metric Annotation</h2>
  * <p>
  * The {@link org.eclipse.microprofile.metrics.annotation.Metric Metric}
@@ -35,7 +35,7 @@
  * annotation.
  * <p>
  * For example,
- * 
+ *
  * <pre>
  * <code>
  *     {@literal @}Inject
@@ -43,7 +43,7 @@
  *     public Histogram histogram;
  * </code>
  * </pre>
- * 
+ *
  * <h2>Interceptor Bindings</h2>
  * <p>
  * MicroProfile Metrics provides four interceptor bindings which can be used to
@@ -51,19 +51,20 @@
  * {@literal @}Metered, {@literal @}Timed.
  * <p>
  * An example using {@literal @}Counted,
- * 
+ *
  * <pre>
  * <code>
  *     {@literal @}Counted (name="visitorCount",
- *         description="The number of visitors to the application") 
+ *         description="The number of visitors to the application")
  *     public void visit () {
  *         ...
  *     }
  * </code>
  * </pre>
+ * 
  * <p>
  * An example using {@literal @}Gauge,
- * 
+ *
  * <pre>
  * <code>
  *     {@literal @}Gauge(name = "queueSize")
@@ -72,15 +73,15 @@
  *     }
  * </code>
  * </pre>
- * 
- * 
+ *
+ *
  * <h2>CDI Qualifier</h2>
  * <p>
  * The {@link org.eclipse.microprofile.metrics.annotation.RegistryType
  * RegistryType} is used to identify which <code>MetricRegistry</code> (Application, Base, or
  * Vendor) should be injected. By default, no <code>RegistryType</code> will
  * inject the application <code>MetricRegistry</code>.
- * 
+ *
  * <pre>
  * <code>
  *      {@literal @}Inject
@@ -88,8 +89,8 @@
  *      MetricRegistry baseRegistry;
  * </code>
  * </pre>
- * 
+ *
  */
 @org.osgi.annotation.versioning.Version("2.0")
-@org.osgi.annotation.versioning.ProviderType
+//@org.osgi.annotation.versioning.ProviderType
 package org.eclipse.microprofile.metrics.annotation;
