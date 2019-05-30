@@ -91,8 +91,6 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
 
     private final Set<MetricID> metricIDs = Collections.synchronizedSortedSet(new TreeSet<MetricID>());
 
-    public static Map<String, Data> AppNameXProducerElement = new HashMap<>();
-
     private final MetricsConfigurationEvent configuration = new MetricsConfigurationEvent();
 
     /**
