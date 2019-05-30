@@ -26,8 +26,6 @@ import com.ibm.ws.microprofile.config.sources.SystemConfigSource;
 @Component(service = Config13DefaultSources.class, immediate = true)
 public class Config13DefaultSources extends DefaultSources {
 
-    //private static ConfigSource configSource = null;
-
     private static List<ConfigSource> listOfConfigSources = new ArrayList<ConfigSource>();
 
     /**
@@ -39,7 +37,7 @@ public class Config13DefaultSources extends DefaultSources {
      * @param classloader
      * @return the default sources found
      */
-    public static ArrayList<ConfigSource> getDefaultSources(ClassLoader classloader) {
+    public synchronized static ArrayList<ConfigSource> getDefaultSources(ClassLoader classloader) {
         ArrayList<ConfigSource> sources = new ArrayList<>();
 
         sources.add(new SystemConfigSource());
@@ -57,12 +55,10 @@ public class Config13DefaultSources extends DefaultSources {
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     protected synchronized void setConfigSource(ConfigSource configSource) {
-        //Config13DefaultSources.configSource = configSource;
         listOfConfigSources.add(configSource);
     }
 
     protected synchronized void unsetConfigSource(ConfigSource configSource) {
-        //Config13DefaultSources.configSource = null;
         listOfConfigSources.remove(configSource);
     }
 

@@ -39,8 +39,7 @@ Export-Package: \
 	com.ibm.ws.microprofile.metrics.helper
 
 Include-Resource: \
-	OSGI-INF=resources/OSGI-INF,\
-	META-INF=resources/META-INF
+	OSGI-INF=resources/OSGI-INF
 
 -dsannotations-inherit: true
 -dsannotations: \
@@ -48,16 +47,6 @@ Include-Resource: \
 	com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries,\
 	com.ibm.ws.microprofile.metrics.config.MetricAppNameConfigSource,\
 	com.ibm.ws.microprofile.metrics.ApplicationListener
-
-app-resources= \
-    META-INF/services/org.eclipse.microprofile.config.spi.ConfigSourcee
-
-Service-Component: \
-    com.ibm.ws.microprofile.metrics.ResourceProvider; \
-        implementation:=com.ibm.wsspi.classloading.ResourceProvider; \
-        provide:=com.ibm.wsspi.classloading.ResourceProvider; \
-        configuration-policy:=optional; \
-        properties:="resources=${app-resources}"
 
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 

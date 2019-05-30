@@ -18,8 +18,10 @@ import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 
-import com.ibm.ws.microprofile.metrics.ApplicationListener;
+import com.ibm.ws.runtime.metadata.ModuleMetaData;
 import com.ibm.ws.threadContext.ComponentMetaDataAccessorImpl;
+import com.ibm.wsspi.webcontainer.metadata.WebModuleMetaData;
+import com.ibm.wsspi.webcontainer.webapp.WebAppConfig;
 
 @Component(service = { ConfigSource.class }, configurationPid = "com.ibm.ws.microprofile.metrics.config", configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true, property = { "service.vendor=IBM" })
 public class MetricAppNameConfigSource implements ConfigSource {
@@ -53,47 +55,67 @@ public class MetricAppNameConfigSource implements ConfigSource {
     @Override
     public String getValue(String propertyName) {
         if (propertyName.equals(METRICS_APPNAME_CONFIG_KEY)) {
-
             String appName = null;
             String contextRoot = null;
-            appName = resolveApplicationName();
-            contextRoot = ApplicationListener.contextRoot_Map.get(appName);
 
-            //perhaps its a WAR in a EAR?
+            //Will resolve contextRoot if we're running in a WAR
+            contextRoot = resolveContextRoot();
+
+            /*
+             * If contextRoot is null, maybe running in a Jar
+             * in which case we need to resolve to
+             * <ApplicationName>#<moduleName>.jar
+             * as the contextRoot
+             */
             if (contextRoot == null) {
-                String moduleName = resolveModuleName();
-                contextRoot = ApplicationListener.contextRoot_Map.get(appName + "#" + moduleName);
+                contextRoot = resolveApplicationModuleString();
             }
-            if (contextRoot != null) {
-                return contextRoot;
-            }
+            return contextRoot;
         }
         return null;
     }
 
-    private String resolveApplicationName() {
-        String appName = null;
+    /**
+     * Resolves the Application name and Module name and
+     * concatenates together with a #.
+     *
+     * @return String <ApplicationName>#<ModuleName>[.jar]
+     */
+    private String resolveApplicationModuleString() {
+
+        String applicationModuleString = null;
         try {
+            String applicationName;
+            String modulename;
             ComponentMetaDataAccessorImpl cmdai = ComponentMetaDataAccessorImpl.getComponentMetaDataAccessor();
-            appName = cmdai.getComponentMetaData().getModuleMetaData().getJ2EEName().getApplication();
+            applicationName = cmdai.getComponentMetaData().getJ2EEName().getApplication();
+            modulename = cmdai.getComponentMetaData().getJ2EEName().getModule();
+            applicationModuleString = applicationName + "#" + modulename;
+
         } catch (NullPointerException e) {
         } catch (Exception e) {
         }
-        return appName;
+        return applicationModuleString;
     }
 
-    private String resolveModuleName() {
-        String moduleName = null;
+    /**
+     *
+     * @return String contexRoot of the Web Application
+     */
+    private String resolveContextRoot() {
+        String contextRoot = null;
         try {
             ComponentMetaDataAccessorImpl cmdai = ComponentMetaDataAccessorImpl.getComponentMetaDataAccessor();
-            moduleName = cmdai.getComponentMetaData().getModuleMetaData().getName();
+
+            ModuleMetaData mmd = cmdai.getComponentMetaData().getModuleMetaData();
+            if (mmd instanceof WebModuleMetaData) {
+                WebModuleMetaData wmmd = (WebModuleMetaData) mmd;
+                WebAppConfig appCfg = wmmd.getConfiguration();
+                contextRoot = appCfg.getContextRoot();
+            }
         } catch (NullPointerException e) {
         } catch (Exception e) {
         }
-        return moduleName;
+        return contextRoot;
     }
-
-    //prolly a webmodulemetadata
-    //glen marcy - modulemetadata to webmoduleinfo
-    //also get app name#modulemetadata combine appname + module name
 }
