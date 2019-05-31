@@ -15,15 +15,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.microprofile.config.spi.ConfigSource;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 
 import com.ibm.ws.runtime.metadata.ModuleMetaData;
 import com.ibm.ws.threadContext.ComponentMetaDataAccessorImpl;
 import com.ibm.wsspi.webcontainer.metadata.WebModuleMetaData;
 import com.ibm.wsspi.webcontainer.webapp.WebAppConfig;
 
-@Component(service = { ConfigSource.class }, configurationPid = "com.ibm.ws.microprofile.metrics.config", configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true, property = { "service.vendor=IBM" })
+//@Component(service = { ConfigSource.class }, configurationPid = "com.ibm.ws.microprofile.metrics.config", configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true, property = { "service.vendor=IBM" })
 public class MetricAppNameConfigSource implements ConfigSource {
 
     private static final String METRICS_APPNAME_CONFIG_KEY = "mp.metrics.appName";
