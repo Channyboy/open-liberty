@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 IBM Corporation and others.
+ * Copyright (c) 2019 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -57,7 +57,7 @@ public class MetricsTCKLauncher {
         additionalProps.put("test.user", "theUser");
         additionalProps.put("test.pwd", "thePassword");
 
-        MvnUtils.runTCKMvnCmd(server, "com.ibm.ws.microprofile.metrics.1.1_fat_tck", "launchTck", additionalProps);
+        MvnUtils.runTCKMvnCmd(server, "com.ibm.ws.microprofile.metrics.2.0_fat_tck", "launchTck", additionalProps);
     }
 
 }
