@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 
 import org.eclipse.microprofile.metrics.Metadata;
@@ -59,6 +60,9 @@ public class MetricResolver {
 
     @Inject
     protected MetricName metricName;
+
+    @Inject
+    protected BeanManager beanManager;
 
     public <E extends Member & AnnotatedElement> Of<Counted> counted(Class<?> topClass, E element) {
         return resolverOf(topClass, element, Counted.class);
@@ -118,9 +122,50 @@ public class MetricResolver {
         return of;
     }
 
+    protected <T extends Annotation> boolean hasMetricAnnotation(Class<T> metric, Class<?> bean) {
+        if (bean.isAnnotationPresent(metric))
+            return true;
+
+        /*
+         * Go through the annotations available in this class to see if a sterotype is present
+         * and if the stereotype contains the metric annotation we are testing for
+         */
+
+        Annotation[] annotationss = bean.getAnnotations();
+        for (Annotation annotation : annotationss) {
+
+            Class<? extends Annotation> annotationType = annotation.annotationType();
+            if (beanManager.isStereotype(annotationType) && annotationType.isAnnotationPresent(metric)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected <T extends Annotation> T getAnnotation(Class<T> metric, Class<?> bean) {
+        T annotationObj = bean.getAnnotation(metric);
+        if (annotationObj != null)
+            return annotationObj;
+
+        Annotation[] annotationss = bean.getAnnotations();
+        for (Annotation annotation : annotationss) {
+
+            Class<? extends Annotation> annotationType = annotation.annotationType();
+            if (beanManager.isStereotype(annotationType) && annotationType.isAnnotationPresent(metric)) {
+                annotationObj = annotationType.getAnnotation(metric);
+                if (annotationObj != null) {
+                    return annotationObj;
+                }
+            }
+        }
+
+        return null;
+    }
+
     protected <E extends Member & AnnotatedElement, T extends Annotation> Of<T> beanResolverOf(E element, Class<T> metric, Class<?> bean) {
-        if (bean.isAnnotationPresent(metric)) {
-            T annotation = bean.getAnnotation(metric);
+
+        if (hasMetricAnnotation(metric, bean)) {
+            T annotation = getAnnotation(metric, bean);
 
             // See if we have the name cached
             String name = extension.getMetricNameForMember(element, annotation);
