@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,7 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -53,7 +54,7 @@ public class JaxRsMonitorFilter implements ContainerRequestFilter, ContainerResp
     ConcurrentHashMap<String,RestMetricInfo> appMetricInfos = new ConcurrentHashMap<String,RestMetricInfo>();
     
     private static final String START_TIME = "Start_Time";
-
+    
     /**
      * Method : filter(ContainerRequestContext)
      * 
@@ -88,7 +89,6 @@ public class JaxRsMonitorFilter implements ContainerRequestFilter, ContainerResp
 
     @Override
     public void filter(ContainerRequestContext reqCtx, ContainerResponseContext respCtx) throws IOException {
-    	
     	long elapsedTime = 0;
         //Calculate the response time for the resource method.
         Long startTime = (Long)reqCtx.getProperty(START_TIME);
@@ -126,6 +126,10 @@ public class JaxRsMonitorFilter implements ContainerRequestFilter, ContainerResp
             if (stats == null) {
                  stats =initJaxRsStats(key, keyPrefix, fullMethodName);
             }
+            
+            //Need to start new minute here.. we need to pass in the stat object so we can actually update Mbean
+        	maybeStartNewMinute(stats);
+            
             // Save key in appMetricInfos for cleanup on application stop.
             addKeyToMetricInfo(appName,key);
             
@@ -135,8 +139,47 @@ public class JaxRsMonitorFilter implements ContainerRequestFilter, ContainerResp
             //Store the response time for the resource method.
             stats.updateRT(elapsedTime < 0 ? 0 : elapsedTime);
         	
-        }
+            
+            //Figure out min/max
+			if (elapsedTime >= 0) {
+				synchronized (this) {
+					if (elapsedTime > stats.getMinuteLatestMaximumDuration().getCurrentValue()) {
+						stats.updateMinuteLatestMaximumDuration(elapsedTime);
+					}
 
+					if (elapsedTime < stats.getMinuteLatestMinimumDuration().getCurrentValue() || stats.getMinuteLatestMinimumDuration().getCurrentValue() == 0L) {
+						stats.updateMinuteLatestMinimumDuration(elapsedTime);
+					}
+				}
+			}
+            
+        }
+    }    
+    
+    private void maybeStartNewMinute(REST_Stats stats) {
+        long newMinute = getCurrentMinuteFromSystem();
+
+        if (newMinute > stats.getMinuteLatest().getCurrentValue()){
+            synchronized (this) {
+                if (newMinute > stats.getMinuteLatest().getCurrentValue()) {
+                	
+					// Move Latest values to Previous
+					stats.updateMinutePreviousMaximumDuration(stats.getMinuteLatestMaximumDuration().getCurrentValue());
+					stats.updateMinutePreviousMinimumDuration(stats.getMinuteLatestMinimumDuration().getCurrentValue());
+					stats.updateMinutePrevious(stats.getMinuteLatest().getCurrentValue());
+
+                    //Rest latest minute values to 0 and update minute
+                    stats.updateMinuteLatestMaximumDuration(0L);
+                    stats.updateMinuteLatestMinimumDuration(0L);
+                    stats.updateMinuteLatest(newMinute);
+                }
+            }//synch
+        }
+    }
+
+    // Get the current system time in minutes, truncating. This number will increase by 1 every complete minute.
+    private long getCurrentMinuteFromSystem() {
+        return System.currentTimeMillis() / 60000;
     }
     
     /**
