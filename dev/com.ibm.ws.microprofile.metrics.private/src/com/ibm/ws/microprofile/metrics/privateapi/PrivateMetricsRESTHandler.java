@@ -40,7 +40,7 @@ public class PrivateMetricsRESTHandler extends BaseMetricsHandler {
 
     @Activate
     protected void activate(ComponentContext context, Map<String, Object> properties) {
-        bm = BaseMetrics.getInstance(sharedMetricRegistry);
+        //bm = BaseMetrics.getInstance(sharedMetricRegistry);
         for (String registry : Constants.REGISTRY_NAMES_LIST) {
             sharedMetricRegistry.getOrCreate(registry);
         }

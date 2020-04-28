@@ -11,6 +11,7 @@
 package com.ibm.ws.microprofile.metrics30.impl;
 
 import org.eclipse.microprofile.config.spi.ConfigProviderResolver;
+import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.osgi.service.component.annotations.Component;
 
@@ -25,6 +26,15 @@ public class SharedMetricRegistries30 extends SharedMetricRegistries {
     @Override
     protected MetricRegistry createNewMetricRegsitry(ConfigProviderResolver configResolver) {
         return new MetricRegistry30Impl(configResolver);
+    }
+
+    @Override
+    public void associateMetricIDToApplication(MetricID metricID, String appName, MetricRegistry registry) {
+        if (MetricRegistry30Impl.class.isInstance(registry)) {
+            MetricRegistry30Impl metricRegistryImpl = (MetricRegistry30Impl) registry;
+            metricRegistryImpl.addNameToApplicationMap(metricID, appName);
+        }
+
     }
 
 }

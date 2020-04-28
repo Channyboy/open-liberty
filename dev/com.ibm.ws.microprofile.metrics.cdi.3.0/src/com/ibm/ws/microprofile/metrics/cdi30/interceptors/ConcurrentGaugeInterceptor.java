@@ -67,7 +67,7 @@ public class ConcurrentGaugeInterceptor {
     private <E extends Member & AnnotatedElement> Object concurrentGaugeCallable(InvocationContext context, E element) throws Exception {
         MetricResolver.Of<ConcurrentGauge> concurrentGaugeAnno = resolver.concurentGauged(bean.getBeanClass(), element);
         MetricID tmid = new MetricID(concurrentGaugeAnno.metricName(), Utils.tagsToTags(concurrentGaugeAnno.tags()));
-        org.eclipse.microprofile.metrics.ConcurrentGauge concurrentGauge = (org.eclipse.microprofile.metrics.ConcurrentGauge) registry.getMetrics().get(tmid);
+        org.eclipse.microprofile.metrics.ConcurrentGauge concurrentGauge = (org.eclipse.microprofile.metrics.ConcurrentGauge) registry.getMetric(tmid);
         if (concurrentGauge == null)
             throw new IllegalStateException("No concurrent gauge with metricID [" + tmid + "] found in registry [" + registry + "]");
 

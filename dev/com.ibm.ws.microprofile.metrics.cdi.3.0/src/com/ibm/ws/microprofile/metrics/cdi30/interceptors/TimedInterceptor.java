@@ -81,7 +81,7 @@ public class TimedInterceptor {
     private <E extends Member & AnnotatedElement> Object timedCallable(InvocationContext context, E element) throws Exception {
         MetricResolver.Of<Timed> timed = resolver.timed(bean.getBeanClass(), element);
         MetricID MetricID = new MetricID(timed.metricName(), Utils.tagsToTags(timed.tags()));
-        Timer timer = (Timer) registry.getMetrics().get(MetricID);
+        Timer timer = (Timer) registry.getMetric(MetricID);
         if (timer == null)
             throw new IllegalStateException("No timer with metricID [" + MetricID + "] found in registry [" + registry + "]");
 

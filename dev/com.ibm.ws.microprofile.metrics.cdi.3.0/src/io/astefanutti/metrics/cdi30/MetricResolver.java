@@ -111,11 +111,11 @@ public class MetricResolver {
 
         String[] tags = this.getTags(annotation);
 
-        if (getReusable(annotation)) {
-            mdb = mdb.reusable();
-        } else {
-            mdb = mdb.notReusable();
-        }
+//        if (getReusable(annotation)) {
+//            mdb = mdb.reusable();
+//        } else {
+//            mdb = mdb.notReusable();
+//        }
 
         Of<T> of = new DoesHaveMetric<>(annotation, name, mdb.build(), initialDiscovery, tags);
         checkReusable(of);
@@ -183,12 +183,6 @@ public class MetricResolver {
 
             MetadataBuilder mdb = Metadata.builder().withName(name).withType(this.getType(annotation)).withUnit(this.getUnit(annotation)).withDescription(this.getDescription(annotation)).withDisplayName(this.getDisplayname(annotation));
             String[] tags = this.getTags(annotation);
-
-            if (getReusable(annotation)) {
-                mdb = mdb.reusable();
-            } else {
-                mdb = mdb.notReusable();
-            }
 
             Of<T> of = new DoesHaveMetric<>(annotation, name, mdb.build(), initialDiscovery, tags);
             checkReusable(of);
@@ -349,23 +343,6 @@ public class MetricResolver {
             throw new IllegalArgumentException("Unsupported Metrics forMethod [" + annotation.getClass().getName() + "]");
     }
 
-    private boolean getReusable(Annotation annotation) {
-        if (Counted.class.isInstance(annotation))
-            return ((Counted) annotation).reusable();
-        else if (ConcurrentGauge.class.isInstance(annotation))
-            return ((ConcurrentGauge) annotation).reusable();
-        else if (Gauge.class.isInstance(annotation))
-            return false;
-        else if (Metered.class.isInstance(annotation))
-            return ((Metered) annotation).reusable();
-        else if (Timed.class.isInstance(annotation))
-            return ((Timed) annotation).reusable();
-        else if (SimplyTimed.class.isInstance(annotation))
-            return ((SimplyTimed) annotation).reusable();
-        else
-            throw new IllegalArgumentException("Unsupported Metrics forMethod [" + annotation.getClass().getName() + "]");
-    }
-
     /**
      * Checks whether the metric should be re-usable
      */
@@ -379,12 +356,14 @@ public class MetricResolver {
 
         String name = of.metadata().getName();
         String[] tags = of.tags();
-        MetricID MetricID = new MetricID(name, Utils.tagsToTags(tags));
+        MetricID metricID = new MetricID(name, Utils.tagsToTags(tags));
 
-        Metadata existingMetadata = registry.getMetadata().get(MetricID);
+        Metadata existingMetadata = registry.getMetadata(name);
 
-        if (existingMetadata != null && (existingMetadata.isReusable() == false || of.metadata().isReusable() == false)) {
-            throw new IllegalArgumentException("Cannot reuse metric for " + of.metricName() + " with tags " + of.tags());
+        //If the current metadata does not equal an existing metadata.. Or if a MetricID of this already exists - Then we can NOT resuse.
+        if ((existingMetadata != null && !existingMetadata.equals(of.metadata()))) {
+            throw new IllegalArgumentException("Cannot reuse metric with MetricID " + metricID.toString() + "with Metadata " + of.metadata().toString()
+                                               + ". There already exists a Metadata fopr tthis metric name with different values: " + existingMetadata.toString());
         }
         return true;
 

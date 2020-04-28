@@ -81,7 +81,7 @@ public class CountedInterceptor {
     private <E extends Member & AnnotatedElement> Object countedCallable(InvocationContext context, E element) throws Exception {
         MetricResolver.Of<Counted> counted = resolver.counted(bean.getBeanClass(), element);
         MetricID tmid = new MetricID(counted.metricName(), Utils.tagsToTags(counted.tags()));
-        Counter counter = (Counter) registry.getMetrics().get(tmid);
+        Counter counter = (Counter) registry.getMetric(tmid);
         if (counter == null)
             throw new IllegalStateException("No counter with metricID [" + tmid + "] found in registry [" + registry + "]");
 

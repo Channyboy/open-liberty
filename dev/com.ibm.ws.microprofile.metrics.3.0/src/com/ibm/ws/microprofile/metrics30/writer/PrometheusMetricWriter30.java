@@ -11,27 +11,24 @@
 package com.ibm.ws.microprofile.metrics30.writer;
 
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.eclipse.microprofile.metrics.ConcurrentGauge;
-import org.eclipse.microprofile.metrics.Counter;
-import org.eclipse.microprofile.metrics.Gauge;
-import org.eclipse.microprofile.metrics.Histogram;
 import org.eclipse.microprofile.metrics.Metadata;
-import org.eclipse.microprofile.metrics.Meter;
 import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricID;
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.SimpleTimer;
-import org.eclipse.microprofile.metrics.Timer;
+import org.eclipse.microprofile.metrics.MetricType;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
-import com.ibm.ws.microprofile.metrics.Constants;
+import com.ibm.ws.microprofile.metrics.exceptions.EmptyRegistryException;
+import com.ibm.ws.microprofile.metrics.exceptions.NoSuchMetricException;
+import com.ibm.ws.microprofile.metrics.exceptions.NoSuchRegistryException;
 import com.ibm.ws.microprofile.metrics23.writer.PrometheusMetricWriter23;
 import com.ibm.ws.microprofile.metrics30.helper.PrometheusBuilder30;
+import com.ibm.ws.microprofile.metrics30.helper.Util30;
 
 /**
  *
@@ -45,151 +42,67 @@ public class PrometheusMetricWriter30 extends PrometheusMetricWriter23 implement
     }
 
     @Override
+    protected void writeMetricsAsPrometheus(StringBuilder builder, String registryName) throws NoSuchRegistryException, EmptyRegistryException {
+        writeMetricMapAsPrometheus(builder, registryName, Util30.getMetricsAsMap(registryName), Util30.getMetricsMetadataAsMap(registryName));
+    }
+
+    @Override
+    protected void writeMetricsAsPrometheus(StringBuilder builder, String registryName,
+                                            String metricName) throws NoSuchRegistryException, NoSuchMetricException, EmptyRegistryException {
+        writeMetricMapAsPrometheus(builder, registryName, Util30.getMetricsAsMap(registryName, metricName), Util30.getMetricsMetadataAsMap(registryName));
+    }
+
+    @Override
     protected void writeMetricMapAsPrometheus(StringBuilder builder, String registryName, Map<MetricID, Metric> metricMap, Map<String, Metadata> metricMetadataMap) {
-        for (Entry<MetricID, Metric> entry : metricMap.entrySet()) {
-            Metric metric = entry.getValue();
-            MetricID metricID = entry.getKey();
-            String metricName = metricID.getName();
+        for (Entry<String, Metadata> metadataEntry : metricMetadataMap.entrySet()) {
+
+            String metricName = metadataEntry.getKey();
             String metricNamePrometheus = registryName + "_" + metricName;
+            Metadata metricMetadata = metadataEntry.getValue();
 
-            //description
-            Metadata metricMetaData = metricMetadataMap.get(metricName);
+            Map<MetricID, Metric> currentMetricMap = new HashMap<MetricID, Metric>();
 
-            String description = "";
-
-            if (!metricMetaData.getDescription().isPresent() || metricMetaData.getDescription().get().trim().isEmpty()) {
-                description = "";
-            } else {
-                description = Tr.formatMessage(tc, locale, metricMetaData.getDescription().get());
+            for (Entry<MetricID, Metric> metricEntry : metricMap.entrySet()) {
+                if (metricEntry.getKey().getName().equals(metricName)) {
+                    currentMetricMap.put(metricEntry.getKey(), metricEntry.getValue());
+                }
+            }
+            //If current metadata that we are parsing does not have a matching metric... skip
+            if (currentMetricMap.isEmpty()) {
+                continue;
             }
 
-            String tags = metricID.getTagsAsString();
+            //Get Description
+            String description = (!metricMetadata.description().isPresent()
+                                  || metricMetadata.description().get().trim().isEmpty()) ? "" : Tr.formatMessage(tc, locale, metricMetadata.description().get());
 
-            //appending unit to the metric name
-            String unit = metricMetaData.getUnit().get();
+            //Get Unit
+            String unit = metricMetadata.getUnit();
 
             //Unit determination / translation
-            double conversionFactor = 0;
-            String appendUnit = null;
+            Map.Entry<String, Double> conversionAppendEntry = resolveConversionFactorXappendUnitEntry(unit);
+            double conversionFactor = conversionAppendEntry.getValue();
+            String appendUnit = conversionAppendEntry.getKey();
 
-            if (unit == null || unit.trim().isEmpty() || unit.equals(MetricUnits.NONE)) {
-
-                conversionFactor = Double.NaN;
-                appendUnit = null;
-
-            } else if (unit.equals(MetricUnits.NANOSECONDS)) {
-
-                conversionFactor = Constants.NANOSECONDCONVERSION;
-                appendUnit = Constants.APPENDEDSECONDS;
-
-            } else if (unit.equals(MetricUnits.MICROSECONDS)) {
-
-                conversionFactor = Constants.MICROSECONDCONVERSION;
-                appendUnit = Constants.APPENDEDSECONDS;
-
-            } else if (unit.equals(MetricUnits.SECONDS)) {
-
-                conversionFactor = Constants.SECONDCONVERSION;
-                appendUnit = Constants.APPENDEDSECONDS;
-
-            } else if (unit.equals(MetricUnits.MINUTES)) {
-
-                conversionFactor = Constants.MINUTECONVERSION;
-                appendUnit = Constants.APPENDEDSECONDS;
-
-            } else if (unit.equals(MetricUnits.HOURS)) {
-
-                conversionFactor = Constants.HOURCONVERSION;
-                appendUnit = Constants.APPENDEDSECONDS;
-
-            } else if (unit.equals(MetricUnits.DAYS)) {
-
-                conversionFactor = Constants.DAYCONVERSION;
-                appendUnit = Constants.APPENDEDSECONDS;
-
-            } else if (unit.equals(MetricUnits.PERCENT)) {
-
-                conversionFactor = Double.NaN;
-                appendUnit = Constants.APPENDEDPERCENT;
-
-            } else if (unit.equals(MetricUnits.BYTES)) {
-
-                conversionFactor = Constants.BYTECONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.KILOBYTES)) {
-
-                conversionFactor = Constants.KILOBYTECONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.MEGABYTES)) {
-
-                conversionFactor = Constants.MEGABYTECONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.GIGABYTES)) {
-
-                conversionFactor = Constants.GIGABYTECONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.KILOBITS)) {
-
-                conversionFactor = Constants.KILOBITCONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.MEGABITS)) {
-
-                conversionFactor = Constants.MEGABITCONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.GIGABITS)) {
-
-                conversionFactor = Constants.GIGABITCONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.KIBIBITS)) {
-
-                conversionFactor = Constants.KIBIBITCONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.MEBIBITS)) {
-
-                conversionFactor = Constants.MEBIBITCONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.GIBIBITS)) {
-
-                conversionFactor = Constants.GIBIBITCONVERSION;
-                appendUnit = Constants.APPENDEDBYTES;
-
-            } else if (unit.equals(MetricUnits.MILLISECONDS)) {
-
-                conversionFactor = Constants.MILLISECONDCONVERSION;
-                appendUnit = Constants.APPENDEDSECONDS;
-
+            if (metricMetadata.getTypeRaw().equals(MetricType.COUNTER)) {
+                PrometheusBuilder30.buildCounter(builder, metricNamePrometheus, description, currentMetricMap);
+            } else if (metricMetadata.getTypeRaw().equals(MetricType.CONCURRENT_GAUGE)) {
+                PrometheusBuilder30.buildConcurrentGauge(builder, metricNamePrometheus, description, currentMetricMap);
+            } else if (metricMetadata.getTypeRaw().equals(MetricType.GAUGE)) {
+                PrometheusBuilder30.buildGauge(builder, metricNamePrometheus, description, currentMetricMap, conversionFactor, appendUnit);
+            } else if (metricMetadata.getTypeRaw().equals(MetricType.TIMER)) {
+                PrometheusBuilder30.buildTimer(builder, metricNamePrometheus, description, currentMetricMap);
+            } else if (metricMetadata.getTypeRaw().equals(MetricType.HISTOGRAM)) {
+                PrometheusBuilder30.buildHistogram(builder, metricNamePrometheus, description, currentMetricMap, conversionFactor, appendUnit);
+            } else if (metricMetadata.getTypeRaw().equals(MetricType.METERED)) {
+                PrometheusBuilder30.buildMeter(builder, metricNamePrometheus, description, currentMetricMap);
+            } else if (metricMetadata.getTypeRaw().equals(MetricType.SIMPLE_TIMER)) {
+                PrometheusBuilder30.buildSimpleTimer(builder, metricNamePrometheus, description, currentMetricMap);
             } else {
-
-                conversionFactor = Double.NaN;
-                appendUnit = "_" + unit;
+                Tr.event(tc, "Metadata " + metricMetadata.toString() + " does not have an appropriate Metric Type");
             }
 
-            if (Counter.class.isInstance(metric)) {
-                PrometheusBuilder30.buildCounter(builder, metricNamePrometheus, (Counter) metric, description, tags);
-            } else if (ConcurrentGauge.class.isInstance(metric)) {
-                PrometheusBuilder30.buildConcurrentGauge(builder, metricNamePrometheus, (ConcurrentGauge) metric, description, tags);
-            } else if (Gauge.class.isInstance(metric)) {
-                PrometheusBuilder30.buildGauge(builder, metricNamePrometheus, (Gauge) metric, description, conversionFactor, tags, appendUnit);
-            } else if (Timer.class.isInstance(metric)) {
-                PrometheusBuilder30.buildTimer(builder, metricNamePrometheus, (Timer) metric, description, tags);
-            } else if (Histogram.class.isInstance(metric)) {
-                PrometheusBuilder30.buildHistogram(builder, metricNamePrometheus, (Histogram) metric, description, conversionFactor, tags, appendUnit);
-            } else if (Meter.class.isInstance(metric)) {
-                PrometheusBuilder30.buildMeter(builder, metricNamePrometheus, (Meter) metric, description, tags);
-            } else if (SimpleTimer.class.isInstance(metric)) {
-                PrometheusBuilder30.buildSimpleTimer(builder, metricNamePrometheus, (SimpleTimer) metric, description, tags);
-            } else {
-                Tr.event(tc, "Metric type '" + metric.getClass() + " for " + metricName + " is invalid.");
-            }
         }
     }
+
 }

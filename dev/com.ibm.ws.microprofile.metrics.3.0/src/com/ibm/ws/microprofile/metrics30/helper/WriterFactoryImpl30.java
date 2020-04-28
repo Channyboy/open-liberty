@@ -20,6 +20,7 @@ import com.ibm.ws.microprofile.metrics.WriterFactory;
 import com.ibm.ws.microprofile.metrics.writer.JSONMetadataWriter;
 import com.ibm.ws.microprofile.metrics.writer.JSONMetricWriter;
 import com.ibm.ws.microprofile.metrics.writer.PrometheusMetricWriter;
+import com.ibm.ws.microprofile.metrics30.writer.JSONMetadataWriter30;
 import com.ibm.ws.microprofile.metrics30.writer.JSONMetricWriter30;
 import com.ibm.ws.microprofile.metrics30.writer.PrometheusMetricWriter30;
 
@@ -35,7 +36,7 @@ public class WriterFactoryImpl30 implements WriterFactory {
     /** {@inheritDoc} */
     @Override
     public JSONMetadataWriter getJSONMetadataWriter(Writer writer, Locale locale) {
-        return new JSONMetadataWriter(writer, locale);
+        return new JSONMetadataWriter30(writer, locale);
     }
 
     /** {@inheritDoc} */

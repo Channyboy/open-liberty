@@ -81,7 +81,7 @@ public class SimplyTimedInterceptor {
     private <E extends Member & AnnotatedElement> Object simplyTimedCallable(InvocationContext context, E element) throws Exception {
         MetricResolver.Of<SimplyTimed> simplyTimed = resolver.simplyTimed(bean.getBeanClass(), element);
         MetricID MetricID = new MetricID(simplyTimed.metricName(), Utils.tagsToTags(simplyTimed.tags()));
-        SimpleTimer simpleTimer = (SimpleTimer) registry.getMetrics().get(MetricID);
+        SimpleTimer simpleTimer = (SimpleTimer) registry.getMetric(MetricID);
         if (simpleTimer == null)
             throw new IllegalStateException("No timer with metricID [" + MetricID + "] found in registry [" + registry + "]");
 

@@ -224,12 +224,12 @@ public class MonitorSimpleTimer extends SimpleTimerImpl {
 				 value = (CompositeData) mbs.getAttribute(new ObjectName(objectName),"MinutePrevious");
 				 minuteOld  = ((Number) value.get("currentValue")).longValue();
 				 
-				 System.out.println("--> minuteLatestMinimumDuration " + minCurrent);
-				 System.out.println("--> minuteLatestMaximumDuration " + maxCurrent);
-				 System.out.println("--> minuteLatest " + minuteCurrent);
-				 System.out.println("--> minutePreviousMinimumDuration " + minOld);
-				 System.out.println("--> minutePreviousMaximumDuration " + maxOld);
-				 System.out.println("--> minutePrevious " + minuteOld);
+//				 System.out.println("--> minuteLatestMinimumDuration " + minCurrent);
+//				 System.out.println("--> minuteLatestMaximumDuration " + maxCurrent);
+//				 System.out.println("--> minuteLatest " + minuteCurrent);
+//				 System.out.println("--> minutePreviousMinimumDuration " + minOld);
+//				 System.out.println("--> minutePreviousMaximumDuration " + maxOld);
+//				 System.out.println("--> minutePrevious " + minuteOld);
 			}
 
 		} catch (Exception e) {

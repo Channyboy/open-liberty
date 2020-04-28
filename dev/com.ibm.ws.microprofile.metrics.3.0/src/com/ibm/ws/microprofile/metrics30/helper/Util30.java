@@ -11,14 +11,24 @@
 package com.ibm.ws.microprofile.metrics30.helper;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 
+import org.eclipse.microprofile.metrics.Metadata;
+import org.eclipse.microprofile.metrics.Metric;
+import org.eclipse.microprofile.metrics.MetricID;
+import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.SimpleTimer;
 import org.eclipse.microprofile.metrics.Timer;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
 import com.ibm.ws.microprofile.metrics.Constants;
+import com.ibm.ws.microprofile.metrics.exceptions.EmptyRegistryException;
+import com.ibm.ws.microprofile.metrics.exceptions.NoSuchMetricException;
+import com.ibm.ws.microprofile.metrics.exceptions.NoSuchRegistryException;
 import com.ibm.ws.microprofile.metrics23.helper.Util23;
 
 /**
@@ -26,6 +36,80 @@ import com.ibm.ws.microprofile.metrics23.helper.Util23;
  */
 public class Util30 extends Util23 {
     private static final TraceComponent tc = Tr.register(Util30.class);
+
+    public static Map<MetricID, Metric> getMetricsAsMap(String registryName, String metricName) throws NoSuchRegistryException, NoSuchMetricException, EmptyRegistryException {
+        MetricRegistry registry = getRegistry(registryName);
+
+        SortedSet<MetricID> metricIDSet = registry.getMetricIDs();
+
+        Map<MetricID, Metric> returnMap = new HashMap<MetricID, Metric>();
+
+        Set<MetricID> potentialMatches = new HashSet<MetricID>();
+
+        //for each metricID... want to check if name equals..
+        for (MetricID tempmid : metricIDSet) {
+            if (tempmid.getName().equals(metricName)) {
+                potentialMatches.add(tempmid);
+            }
+        }
+
+        if (metricIDSet.isEmpty()) {
+            throw new EmptyRegistryException();
+        } else if (potentialMatches.size() == 0) {
+            throw new NoSuchMetricException();
+        } else {
+            for (MetricID tmid : potentialMatches) {
+                returnMap.put(tmid, registry.getMetric(tmid));
+            }
+        }
+        return returnMap;
+    }
+
+    public static Map<MetricID, Metric> getMetricsAsMap(String registryName) throws NoSuchRegistryException, EmptyRegistryException {
+        MetricRegistry registry = getRegistry(registryName);
+        Map<MetricID, Metric> metricMap = registry.getMetrics();
+        if (metricMap.isEmpty()) {
+            throw new EmptyRegistryException();
+        }
+        return metricMap;
+    }
+
+    public static Map<String, Metadata> getMetricsMetadataAsMap(String registryName) throws NoSuchRegistryException, EmptyRegistryException {
+        MetricRegistry registry = getRegistry(registryName);
+        Map<String, Metadata> metricMetadataMap = new HashMap<String, Metadata>();//registry.getMetadata();
+        for (String name : registry.getNames()) {
+            metricMetadataMap.put(name, registry.getMetadata(name));
+        }
+        if (metricMetadataMap.isEmpty()) {
+            throw new EmptyRegistryException();
+        }
+        return metricMetadataMap;
+    }
+
+    public static Map<String, Metadata> getMetricsMetadataAsMap(String registryName,
+                                                                String metricName) throws NoSuchRegistryException, EmptyRegistryException, NoSuchMetricException {
+        MetricRegistry registry = getRegistry(registryName);
+        Map<String, Metadata> metricMetadataMap = new HashMap<String, Metadata>();//registry.getMetadata();
+        for (String name : registry.getNames()) {
+            metricMetadataMap.put(name, registry.getMetadata(name));
+        }
+
+        Map<String, Metadata> returnMap = new HashMap<String, Metadata>();
+
+        registry.getMetadata(metricName);
+
+        //TODO: wait we're just getting one metadata?
+        //REMOVE do i even need this..?
+
+        if (metricMetadataMap.isEmpty()) {
+            throw new EmptyRegistryException();
+        } else if (!(metricMetadataMap.containsKey(metricName))) {
+            throw new NoSuchMetricException();
+        } else {
+            returnMap.put(metricName, metricMetadataMap.get(metricName));
+        }
+        return returnMap;
+    }
 
     public static Map<String, Number> getTimerNumbers(Timer timer, String tags, double conversionFactor) {
         Map<String, Number> results = new HashMap<String, Number>();

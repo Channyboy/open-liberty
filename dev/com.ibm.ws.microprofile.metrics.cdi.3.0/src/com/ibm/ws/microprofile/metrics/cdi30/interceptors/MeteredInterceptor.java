@@ -81,7 +81,7 @@ public class MeteredInterceptor {
     private <E extends Member & AnnotatedElement> Object meteredCallable(InvocationContext context, E element) throws Exception {
         MetricResolver.Of<Metered> metered = resolver.metered(bean.getBeanClass(), element);
         MetricID tmid = new MetricID(metered.metricName(), Utils.tagsToTags(metered.tags()));
-        Meter meter = (Meter) registry.getMetrics().get(tmid);
+        Meter meter = (Meter) registry.getMetric(tmid);
 
         if (meter == null)
             throw new IllegalStateException("No meter with metricID [" + tmid + "] found in registry [" + registry + "]");

@@ -37,6 +37,7 @@ Private-Package: \
 
 Export-Package: \
 	com.ibm.ws.microprofile.metrics,\
+	com.ibm.ws.microprofile.metrics30,\
 	com.ibm.ws.microprofile.metrics.helper,\
 	com.ibm.ws.microprofile.metrics.impl,\
 	com.ibm.ws.microprofile.metrics23.impl,\
@@ -45,9 +46,10 @@ Export-Package: \
 -dsannotations-inherit: true
 -dsannotations: \
 	com.ibm.ws.microprofile.metrics.MetricsConfig,\
+	com.ibm.ws.microprofile.metrics30.BaseMetrics,\
 	com.ibm.ws.microprofile.metrics30.helper.WriterFactoryImpl30,\
 	com.ibm.ws.microprofile.metrics30.impl.SharedMetricRegistries30,\
-	com.ibm.ws.microprofile.metrics.ApplicationListener
+	com.ibm.ws.microprofile.metrics30.ApplicationListener30
 
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 

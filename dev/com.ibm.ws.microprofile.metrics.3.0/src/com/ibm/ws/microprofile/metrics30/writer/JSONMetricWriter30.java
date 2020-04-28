@@ -30,7 +30,9 @@ import com.ibm.json.java.JSONObject;
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
 import com.ibm.ws.ffdc.annotation.FFDCIgnore;
-import com.ibm.ws.microprofile.metrics.helper.Util;
+import com.ibm.ws.microprofile.metrics.exceptions.EmptyRegistryException;
+import com.ibm.ws.microprofile.metrics.exceptions.NoSuchMetricException;
+import com.ibm.ws.microprofile.metrics.exceptions.NoSuchRegistryException;
 import com.ibm.ws.microprofile.metrics23.writer.JSONMetricWriter23;
 import com.ibm.ws.microprofile.metrics30.helper.Util30;
 
@@ -44,6 +46,16 @@ public class JSONMetricWriter30 extends JSONMetricWriter23 {
      */
     public JSONMetricWriter30(Writer writer) {
         super(writer);
+    }
+
+    @Override
+    protected JSONObject getMetricsAsJson(String registryName) throws NoSuchRegistryException, EmptyRegistryException {
+        return getJsonFromMetricMap(Util30.getMetricsAsMap(registryName), Util30.getMetricsMetadataAsMap(registryName));
+    }
+
+    @Override
+    protected JSONObject getMetricsAsJson(String registryName, String metricName) throws NoSuchRegistryException, NoSuchMetricException, EmptyRegistryException {
+        return getJsonFromMetricMap(Util30.getMetricsAsMap(registryName, metricName), Util30.getMetricsMetadataAsMap(registryName, metricName));
     }
 
     private static final TraceComponent tc = Tr.register(JSONMetricWriter30.class);
@@ -62,7 +74,7 @@ public class JSONMetricWriter30 extends JSONMetricWriter23 {
             String tags = "";
 
             Metadata metricMetaData = metricMetadataMap.get(metricName);
-            String unit = metricMetaData.getUnit().get();
+            String unit = metricMetaData.getUnit();
 
             // If an invalid unit is entered, default to nanoseconds
             double conversionFactor = 1;
@@ -113,7 +125,7 @@ public class JSONMetricWriter30 extends JSONMetricWriter23 {
             if (Counter.class.isInstance(metric)) {
                 jsonObject.put(metricNameWithTags, ((Counter) metric).getCount());
             } else if (ConcurrentGauge.class.isInstance(metric)) {
-                jsonObject.put(metricName, getJsonFromMap(Util.getConcurrentGaugeNumbers((ConcurrentGauge) metric, tags), metricName, jsonObject));
+                jsonObject.put(metricName, getJsonFromMap(Util30.getConcurrentGaugeNumbers((ConcurrentGauge) metric, tags), metricName, jsonObject));
             } else if (Gauge.class.isInstance(metric)) {
                 try {
                     jsonObject.put(metricNameWithTags, ((Gauge) metric).getValue());
@@ -123,14 +135,34 @@ public class JSONMetricWriter30 extends JSONMetricWriter23 {
             } else if (Timer.class.isInstance(metric)) {
                 jsonObject.put(metricName, getJsonFromMap(Util30.getTimerNumbers((Timer) metric, tags, conversionFactor), metricName, jsonObject));
             } else if (SimpleTimer.class.isInstance(metric)) {
-                jsonObject.put(metricName, getJsonFromMap2(Util30.getSimpleTimerNumbers2((SimpleTimer) metric, tags, conversionFactor), metricName, jsonObject));
+                jsonObject.put(metricName, getJsonFromMapObject(Util30.getSimpleTimerNumbers2((SimpleTimer) metric, tags, conversionFactor), metricName, jsonObject));
             } else if (Histogram.class.isInstance(metric)) {
-                jsonObject.put(metricName, getJsonFromMap(Util.getHistogramNumbers((Histogram) metric, tags), metricName, jsonObject));
+                jsonObject.put(metricName, getJsonFromMap(Util30.getHistogramNumbers((Histogram) metric, tags), metricName, jsonObject));
             } else if (Meter.class.isInstance(metric)) {
-                jsonObject.put(metricName, getJsonFromMap(Util.getMeterNumbers((Meter) metric, tags), metricName, jsonObject));
+                jsonObject.put(metricName, getJsonFromMap(Util30.getMeterNumbers((Meter) metric, tags), metricName, jsonObject));
             } else {
                 Tr.event(tc, "Metric type '" + metric.getClass() + " for " + metricName + " is invalid.");
             }
+        }
+        return jsonObject;
+    }
+
+    protected JSONObject getJsonFromMapObject(Map<String, Object> metricMap, String metricName, JSONObject parentJSONObject) {
+
+        /*
+         * Check if parent JsonObject has this "metric" already set in it.
+         * If so, need to grow the JsonObject and then reinsert
+         */
+        JSONObject jsonObject;
+        if (parentJSONObject.containsKey(metricName)) {
+            jsonObject = (JSONObject) parentJSONObject.get(metricName);
+        } else {
+            jsonObject = new JSONObject();
+        }
+
+        //map already contains "keys" with the "tags"
+        for (Entry<String, Object> entry : metricMap.entrySet()) {
+            jsonObject.put(entry.getKey(), entry.getValue());
         }
         return jsonObject;
     }

@@ -10,6 +10,10 @@
  *******************************************************************************/
 package com.ibm.ws.microprofile.metrics30.helper;
 
+import java.util.Map;
+
+import org.eclipse.microprofile.metrics.Metric;
+import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.SimpleTimer;
 import org.eclipse.microprofile.metrics.Timer;
@@ -26,43 +30,45 @@ public class PrometheusBuilder30 extends PrometheusBuilder23 {
 
     private static final TraceComponent tc = Tr.register(PrometheusBuilder30.class);
 
-    public static void buildTimer(StringBuilder builder, String name, Timer timer, String description, String tags) {
-        buildMetered(builder, name, timer, description, tags);
+    public static void buildTimer(StringBuilder builder, String name, String description, Map<MetricID, Metric> currentMetricMap) {
+        buildMetered(builder, name, description, currentMetricMap);
         double conversionFactor = Constants.NANOSECONDCONVERSION;
 
         String lineName = name + "_elapsedTime_" + MetricUnits.SECONDS.toString();
         getPromTypeLine(builder, lineName, "gauge");
-
-        getPromValueLine(builder, lineName, timer.getElapsedTime().toNanos() * conversionFactor, tags);
+        for (MetricID mid : currentMetricMap.keySet()) {
+            getPromValueLine(builder, lineName, ((Timer) currentMetricMap.get(mid)).getElapsedTime().toNanos() * conversionFactor, mid.getTagsAsString());
+        }
 
         // Build Histogram
-        buildSampling(builder, name, timer, description, conversionFactor, tags, Constants.APPENDEDSECONDS);
+        buildSampling(builder, name, description, currentMetricMap, conversionFactor, Constants.APPENDEDSECONDS);
     }
 
-    public static void buildSimpleTimer(StringBuilder builder, String name, SimpleTimer simpleTimer, String description, String tags) {
+    public static void buildSimpleTimer(StringBuilder builder, String name, String description, Map<MetricID, Metric> currentMetricMap) {
         double conversionFactor = Constants.NANOSECONDCONVERSION;
 
-        buildCounting(builder, name, simpleTimer, description, tags);
+        buildCounting(builder, name, description, currentMetricMap);
 
         String lineName = name + "_elapsedTime_" + MetricUnits.SECONDS.toString();
         getPromTypeLine(builder, lineName, "gauge");
-        getPromValueLine(builder, lineName, simpleTimer.getElapsedTime().toNanos() * conversionFactor, tags);
+        for (MetricID mid : currentMetricMap.keySet()) {
+            getPromValueLine(builder, lineName, ((SimpleTimer) currentMetricMap.get(mid)).getElapsedTime().toNanos() * conversionFactor, mid.getTagsAsString());
+        }
 
         lineName = name + "_maxTimeDuration_" + MetricUnits.SECONDS.toString();
         getPromTypeLine(builder, lineName, "gauge");
-
-        Number value = (simpleTimer.getMaxTimeDuration() != null) ? simpleTimer.getMaxTimeDuration().toNanos() * conversionFactor : Double.NaN;
-
-        getPromValueLine(builder, lineName, value, tags);
+        for (MetricID mid : currentMetricMap.keySet()) {
+            Number value = (((SimpleTimer) currentMetricMap.get(mid)).getMaxTimeDuration() != null) ? ((SimpleTimer) currentMetricMap.get(mid)).getMaxTimeDuration().toNanos()
+                                                                                                      * conversionFactor : Double.NaN;
+            getPromValueLine(builder, lineName, value, mid.getTagsAsString());
+        }
 
         lineName = name + "_minTimeDuration_" + MetricUnits.SECONDS.toString();
-
-//        getPromTypeLine(builder, lineName, "gauge");
-//        System.out.println(simpleTimer.getMinTimeDuration().toNanos());
-//        System.out.println(simpleTimer.getMinTimeDuration().toNanos() * conversionFactor);
-//        System.out.println(notANumber(simpleTimer.getMinTimeDuration().toNanos() * conversionFactor));
-        value = (simpleTimer.getMinTimeDuration() != null) ? simpleTimer.getMinTimeDuration().toNanos() * conversionFactor : Double.NaN;
-        getPromValueLine(builder, lineName, value, tags);
+        for (MetricID mid : currentMetricMap.keySet()) {
+            Number value = (((SimpleTimer) currentMetricMap.get(mid)).getMinTimeDuration() != null) ? ((SimpleTimer) currentMetricMap.get(mid)).getMinTimeDuration().toNanos()
+                                                                                                      * conversionFactor : Double.NaN;
+            getPromValueLine(builder, lineName, value, mid.getTagsAsString());
+        }
 
     }
 
