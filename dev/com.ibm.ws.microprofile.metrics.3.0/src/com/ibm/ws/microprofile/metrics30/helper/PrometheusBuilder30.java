@@ -64,6 +64,7 @@ public class PrometheusBuilder30 extends PrometheusBuilder23 {
         }
 
         lineName = name + "_minTimeDuration_" + MetricUnits.SECONDS.toString();
+        getPromTypeLine(builder, lineName, "gauge");
         for (MetricID mid : currentMetricMap.keySet()) {
             Number value = (((SimpleTimer) currentMetricMap.get(mid)).getMinTimeDuration() != null) ? ((SimpleTimer) currentMetricMap.get(mid)).getMinTimeDuration().toNanos()
                                                                                                       * conversionFactor : Double.NaN;
