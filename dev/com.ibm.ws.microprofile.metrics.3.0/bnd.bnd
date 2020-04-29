@@ -11,8 +11,6 @@
 -include= ~../cnf/resources/bnd/bundle.props
 bVersion=1.0.${libertyBundleMicroVersion}
 
-javac.source: 1.8
-javac.target: 1.8
 
 Bundle-Name: MicroProfile Metrics 3.0
 Bundle-SymbolicName: com.ibm.ws.microprofile.metrics.3.0
