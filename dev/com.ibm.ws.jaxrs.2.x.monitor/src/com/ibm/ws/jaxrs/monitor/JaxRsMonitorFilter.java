@@ -23,6 +23,7 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 
 import com.ibm.websphere.csi.J2EEName;
@@ -89,6 +90,8 @@ public class JaxRsMonitorFilter implements ContainerRequestFilter, ContainerResp
 
     @Override
     public void filter(ContainerRequestContext reqCtx, ContainerResponseContext respCtx) throws IOException {
+    	
+	    	
     	long elapsedTime = 0;
         //Calculate the response time for the resource method.
         Long startTime = (Long)reqCtx.getProperty(START_TIME);
@@ -120,39 +123,48 @@ public class JaxRsMonitorFilter implements ContainerRequestFilter, ContainerResp
             String appName = getAppName(cmd);
             String modName = getModName(cmd);
             String keyPrefix = createKeyPrefix(appName,modName);
-            String key = keyPrefix + "/" + fullMethodName; 
+            String key = keyPrefix + "/" + fullMethodName;
             
             REST_Stats stats = jaxRsCountByName.get(key);
             if (stats == null) {
                  stats =initJaxRsStats(key, keyPrefix, fullMethodName);
             }
             
-            //Need to start new minute here.. we need to pass in the stat object so we can actually update Mbean
-        	maybeStartNewMinute(stats);
             
-            // Save key in appMetricInfos for cleanup on application stop.
-            addKeyToMetricInfo(appName,key);
-            
-            //Increment the request count for the resource method.
-            stats.incrementCountBy(1);
-            
-            //Store the response time for the resource method.
-            stats.updateRT(elapsedTime < 0 ? 0 : elapsedTime);
-        	
-            
-            //Figure out min/max
-			if (elapsedTime >= 0) {
-				synchronized (this) {
-					if (elapsedTime > stats.getMinuteLatestMaximumDuration().getCurrentValue()) {
-						stats.updateMinuteLatestMaximumDuration(elapsedTime);
-					}
+        	/*
+        	 * Explicitly checking for the Metrics Header via hard-coded header string.
+        	 * Don't want to add runtime/build dependency to this bundle/project
+        	 * because jaxrsMonitor-1.0.feature can run without metrics.
+        	 * 
+        	 */
+        	String metricsHeader = respCtx.getHeaderString("com.ibm.ws.microprofile.metrics.monitor.MetricsJaxRsEMCallbackImpl.Exception");
+        	if ( metricsHeader == null) {
+                //Need to start new minute here.. we need to pass in the stat object so we can actually update Mbean
+            	maybeStartNewMinute(stats);
+                
+                // Save key in appMetricInfos for cleanup on application stop.
+                addKeyToMetricInfo(appName,key);
+                
+                //Increment the request count for the resource method.
+                stats.incrementCountBy(1);
+                
+                //Store the response time for the resource method.
+                stats.updateRT(elapsedTime < 0 ? 0 : elapsedTime);
+            	
+                
+                //Figure out min/max
+    			if (elapsedTime >= 0) {
+    				synchronized (this) {
+    					if (elapsedTime > stats.getMinuteLatestMaximumDuration().getCurrentValue()) {
+    						stats.updateMinuteLatestMaximumDuration(elapsedTime);
+    					}
 
-					if (elapsedTime < stats.getMinuteLatestMinimumDuration().getCurrentValue() || stats.getMinuteLatestMinimumDuration().getCurrentValue() == 0L) {
-						stats.updateMinuteLatestMinimumDuration(elapsedTime);
-					}
-				}
-			}
-            
+    					if (elapsedTime < stats.getMinuteLatestMinimumDuration().getCurrentValue() || stats.getMinuteLatestMinimumDuration().getCurrentValue() == 0L) {
+    						stats.updateMinuteLatestMinimumDuration(elapsedTime);
+    					}
+    				}
+    			}
+        	}  
         }
     }    
     
@@ -244,7 +256,7 @@ public class JaxRsMonitorFilter implements ContainerRequestFilter, ContainerResp
     		rMetricInfo = new RestMetricInfo();
     		appMetricInfos.put(appName, rMetricInfo);
     	}
-    		return rMetricInfo;
+    	return rMetricInfo;
     }
     
     // At application stop time we will need to clean up the jaxRsCountByName 

@@ -36,12 +36,16 @@ WS-TraceGroup: METRICS
 
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 
--dsannotations: com.ibm.ws.microprofile.metrics.monitor.MonitorMetricsHandler
+-dsannotations: \
+    com.ibm.ws.microprofile.metrics.monitor.MonitorMetricsHandler, \
+    com.ibm.ws.microprofile.metrics.monitor.MetricsJaxRsEMCallbackImpl
+
 
 Service-Component: \
 
 -buildpath: \
 	com.ibm.ws.logging;version=latest,\
+	com.ibm.ws.container.service;version=latest,\
 	com.ibm.ws.microprofile.metrics.2.0;version=latest,\
 	com.ibm.ws.microprofile.metrics.3.0;version=latest,\
 	com.ibm.websphere.org.eclipse.microprofile.metrics.3.0;version=latest,\
@@ -49,4 +53,6 @@ Service-Component: \
     com.ibm.websphere.org.osgi.service.component,\
     com.ibm.wsspi.org.osgi.service.component.annotations,\
 	com.ibm.ws.anno;version=latest, \
-	com.ibm.ws.org.osgi.annotation.versioning;version=latest
+	com.ibm.ws.org.osgi.annotation.versioning;version=latest, \
+	com.ibm.ws.jaxrs.defaultexceptionmapper;version=latest, \
+	com.ibm.websphere.javaee.jaxrs.2.0;version=latest
