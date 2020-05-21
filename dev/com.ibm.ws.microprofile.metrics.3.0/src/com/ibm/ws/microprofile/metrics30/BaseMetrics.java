@@ -33,12 +33,16 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
+import com.ibm.websphere.ras.Tr;
+import com.ibm.websphere.ras.TraceComponent;
 import com.ibm.ws.microprofile.metrics.BaseMetricConstants;
 import com.ibm.ws.microprofile.metrics.impl.CounterImpl;
 import com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries;
 
 @Component(service = { BaseMetrics.class }, configurationPolicy = ConfigurationPolicy.IGNORE, immediate = true)
 public class BaseMetrics {
+
+    private static final TraceComponent tc = Tr.register(BaseMetrics.class);
 
     protected static BaseMetrics baseMetrics = null;
     protected static String BASE = MetricRegistry.Type.BASE.getName();
@@ -186,7 +190,7 @@ public class BaseMetrics {
                     return value;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Tr.error(tc, "An exception occured while querying the Mbean Server : " + e.getMessage());
             }
             return null;
         }
@@ -206,7 +210,7 @@ public class BaseMetrics {
                 Number value = (Number) mbs.getAttribute(new ObjectName(objectName), attribute);
                 return value.longValue();
             } catch (Exception e) {
-                e.printStackTrace();
+                Tr.error(tc, "An exception occured while querying the Mbean Server : " + e.getMessage());
             }
             return 0;
         }

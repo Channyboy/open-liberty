@@ -133,7 +133,7 @@ public class Util30 extends Util23 {
 
     /*
      * To facilitate changes into the MicroProfile Specification in 3.0 we need to return a value that is an
-     * Object because the maxTimeDuration or minTimeDuration could be a NaN object.
+     * Object because the maxTimeDuration or minTimeDuration could be a null object.
      */
     public static Map<String, Object> getSimpleTimerNumbersAsObjects(SimpleTimer simpleTimer, String tags, double conversionFactor) {
         Map<String, Object> results = new HashMap<String, Object>();

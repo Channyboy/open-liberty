@@ -149,7 +149,7 @@ public class JSONMetricWriter30 extends JSONMetricWriter23 {
 
     /*
      * This method compared to getJsonFromMap returns a map with a value as an Object.. This is because
-     * the value can be a NaN object.
+     * the value can be a null object.
      */
     protected JSONObject getJsonFromMapAsObject(Map<String, Object> metricMap, String metricName, JSONObject parentJSONObject) {
 
