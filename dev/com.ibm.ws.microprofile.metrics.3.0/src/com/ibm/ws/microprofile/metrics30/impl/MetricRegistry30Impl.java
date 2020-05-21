@@ -47,6 +47,8 @@ import org.eclipse.microprofile.metrics.SimpleTimer;
 import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
 
+import com.ibm.websphere.ras.Tr;
+import com.ibm.websphere.ras.TraceComponent;
 import com.ibm.ws.ffdc.annotation.FFDCIgnore;
 import com.ibm.ws.microprofile.metrics.impl.ConcurrentGaugeImpl;
 import com.ibm.ws.microprofile.metrics.impl.CounterImpl;
@@ -59,6 +61,8 @@ import com.ibm.ws.microprofile.metrics.impl.MeterImpl;
  */
 @Vetoed
 public class MetricRegistry30Impl implements MetricRegistry {
+
+    private static final TraceComponent tc = Tr.register(MetricRegistry30Impl.class);
 
     protected final ConcurrentMap<MetricID, Metric> metricsMID;
     protected final ConcurrentMap<String, Metadata> metadataMID;
@@ -250,6 +254,16 @@ public class MetricRegistry30Impl implements MetricRegistry {
     }
 
     public void unRegisterApplicationMetrics(String appName) {
+        /*
+         * This would be the case if the ApplicationListener30's ApplicatinInfo does not contain
+         * the application's deployment name (corrupt application?) or if this MetricRegistry is
+         * not running under the application TCCL ( as it relies on the ComponentMetadata to
+         * retrieve the application name).
+         */
+        if (appName == null) {
+            Tr.event(tc, "Application name is null. Cannot unregister metrics for null application.");
+            return;
+        }
         ConcurrentLinkedQueue<MetricID> list = applicationMap.remove(appName);
 
         if (list != null) {
