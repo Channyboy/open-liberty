@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.enterprise.inject.Vetoed;
 
 import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.spi.ConfigProviderResolver;
 import org.eclipse.microprofile.metrics.ConcurrentGauge;
 import org.eclipse.microprofile.metrics.Counter;
@@ -64,9 +66,24 @@ public class MetricRegistry30Impl implements MetricRegistry {
 
     private static final TraceComponent tc = Tr.register(MetricRegistry30Impl.class);
 
+    private static final String GLOBAL_TAGS_VARIABLE = "mp.metrics.tags";
+
+    private static final String APPLICATION_NAME_VARIABLE = "mp.metrics.appName";
+
+    private static final String APPLICATION_NAME_TAG = "_app";
+
+    private static final String GLOBAL_TAG_MALFORMED_EXCEPTION = "Malformed list of Global Tags. Tag names "
+                                                                 + "must match the following regex [a-zA-Z_][a-zA-Z0-9_]*."
+                                                                 + " Global Tag values must not be empty."
+                                                                 + " Global Tag values MUST escape equal signs `=` and commas `,`"
+                                                                 + " with a backslash `\\` ";
+
     protected final ConcurrentMap<MetricID, Metric> metricsMID;
     protected final ConcurrentMap<String, Metadata> metadataMID;
     protected final ConcurrentHashMap<String, ConcurrentLinkedQueue<MetricID>> applicationMap;
+    protected final ConcurrentHashMap<String, Tag[]> globalTagsCache;
+    protected final ConcurrentHashMap<String, Tag> applicationTagsCache;
+
     private final ConfigProviderResolver configResolver;
 
     private final static boolean usingJava2Security = System.getSecurityManager() != null;
@@ -85,6 +102,10 @@ public class MetricRegistry30Impl implements MetricRegistry {
         this.metadataMID = new ConcurrentHashMap<String, Metadata>();
 
         this.applicationMap = new ConcurrentHashMap<String, ConcurrentLinkedQueue<MetricID>>();
+
+        this.globalTagsCache = new ConcurrentHashMap<String, Tag[]>();
+
+        this.applicationTagsCache = new ConcurrentHashMap<String, Tag>();
 
         this.configResolver = configResolver;
 
@@ -664,8 +685,116 @@ public class MetricRegistry30Impl implements MetricRegistry {
         return getMetrics(Timer.class, filter);
     }
 
+    private synchronized Tag[] resolveMPConfigTags() {
+        try {
+            String appName = getApplicationName();
+            Config config = ConfigProvider.getConfig();
+
+            Tag[] globalTags = resolveGlobalTags(config, appName);
+            Tag appNameTag = resolveAppTag(config, appName);
+
+            //If Global Tags are null
+            if (globalTags == null && appNameTag != null) {
+                return new Tag[] { appNameTag };
+            } else if (globalTags != null && appNameTag == null) {
+                return globalTags;
+            } else if (globalTags != null && appNameTag != null) {
+                Tag[] combinedTags = Arrays.copyOf(globalTags, globalTags.length + 1);
+                combinedTags[combinedTags.length - 1] = appNameTag;
+                return combinedTags;
+            } else {
+                return null;
+            }
+
+        } catch (NoClassDefFoundError | IllegalStateException | ExceptionInInitializerError e) {
+            // MP Config is probably not available, so just go on
+        }
+
+        return null;
+    }
+
+    private synchronized Tag[] resolveGlobalTags(Config config, String appName) {
+        //Return the cache value
+        if (globalTagsCache.contains(appName)) {
+            return globalTagsCache.get(appName);
+        }
+
+        //Using MP Config to retreive the mp.metrics.tags Config value
+        Optional<String> globalTags = config.getOptionalValue(GLOBAL_TAGS_VARIABLE, String.class);
+
+        //evaluate if there exists tag values
+        Tag[] globalTagss = (globalTags.isPresent()) ? parseGlobalTags(globalTags.get()) : null;
+
+        //cache the values and return it (the array of tags)
+        return globalTagsCache.putIfAbsent(appName, globalTagss);
+    }
+
+    private Tag[] parseGlobalTags(String globalTags) {
+        if (globalTags == null || globalTags.length() == 0) {
+            return null;
+        }
+        String[] kvPairs = globalTags.split("(?<!\\\\),");
+
+        Tag[] arrayOfTags = new Tag[kvPairs.length];
+        int count = 0;
+        for (String kvString : kvPairs) {
+
+            if (kvString.length() == 0) {
+                throw new IllegalArgumentException(GLOBAL_TAG_MALFORMED_EXCEPTION);
+            }
+
+            String[] keyValueSplit = kvString.split("(?<!\\\\)=");
+
+            if (keyValueSplit.length != 2 || keyValueSplit[0].length() == 0 || keyValueSplit[1].length() == 0) {
+                throw new IllegalArgumentException(GLOBAL_TAG_MALFORMED_EXCEPTION);
+            }
+
+            String key = keyValueSplit[0];
+            String value = keyValueSplit[1];
+
+            if (!key.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                throw new IllegalArgumentException("Invalid Tag name. Tag names must match the following regex "
+                                                   + "[a-zA-Z_][a-zA-Z0-9_]*");
+            }
+            value = value.replace("\\,", ",");
+            value = value.replace("\\=", "=");
+
+            arrayOfTags[count] = new Tag(key, value);
+            count++;
+        }
+        return arrayOfTags;
+    }
+
+    private synchronized Tag resolveAppTag(Config config, String appName) {
+        //Return cached value
+        if (applicationTagsCache.contains(appName)) {
+            return applicationTagsCache.get(appName);
+        }
+
+        //Using MP Config to retreive the mp.metrics.appName Config value
+        Optional<String> applicationName = config.getOptionalValue(APPLICATION_NAME_VARIABLE, String.class);
+
+        //Evaluate if there exists a tag value
+        Tag appTag = (applicationName.isPresent()) ? new Tag(APPLICATION_NAME_TAG, appName) : null;
+
+        //Cache the value and return it (the Tag)
+        return applicationTagsCache.putIfAbsent(appName, appTag);
+
+    }
+
     @SuppressWarnings("unchecked")
     protected <T extends Metric> T getOrAdd(Metadata metadata, MetricBuilder30<T> builder, Tag... tags) {
+
+        Tag[] mpConfigTags = resolveMPConfigTags();
+
+        if (mpConfigTags != null && tags != null) {
+            int originalTagsArrayLength = tags.length;
+            tags = Arrays.copyOf(tags, tags.length + mpConfigTags.length);
+            System.arraycopy(mpConfigTags, 0, tags, originalTagsArrayLength, mpConfigTags.length);
+        } else if (mpConfigTags != null && tags == null) {
+            tags = mpConfigTags;
+        }
+
         /*
          * Check if metric with this name already exists or not.
          * If it does exist, checks if is of the same metric type.
