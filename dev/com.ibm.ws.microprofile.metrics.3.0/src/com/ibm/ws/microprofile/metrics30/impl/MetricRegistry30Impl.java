@@ -230,7 +230,7 @@ public class MetricRegistry30Impl implements MetricRegistry {
          * before creating Metric ID
          */
         if (!resolvedMPConfigTags) {
-            combineApplicationTagsWithMPConfigAppTags(tags);
+            tags = combineApplicationTagsWithMPConfigAppTags(tags);
         }
 
         MetricID MetricID = new MetricID(metadata.getName(), tags);
@@ -815,13 +815,14 @@ public class MetricRegistry30Impl implements MetricRegistry {
             Optional<String> applicationName = config.getOptionalValue(APPLICATION_NAME_VARIABLE, String.class);
 
             //Evaluate if there exists a tag value
-            Tag appTag = (applicationName.isPresent()) ? new Tag(APPLICATION_NAME_TAG, applicationName.get()) : null;
+            Tag appTag = (applicationName.isPresent()) ? new Tag(APPLICATION_NAME_TAG, applicationName.get()) : new Tag("invalid", "invalid");
 
             //Cache the value
             applicationTagsCache.put(appName, appTag);
         }
-        return applicationTagsCache.get(appName);
-
+        //Perhaps we don't really need a concurrent hashmap.. so we can avoid this.
+        Tag returnTag;
+        return ((returnTag = applicationTagsCache.get(appName)).getTagName().equals("invalid")) ? null : returnTag;
     }
 
     /**
@@ -855,6 +856,14 @@ public class MetricRegistry30Impl implements MetricRegistry {
             for (Tag tag : tags) {
                 tagMap.put(tag.getTagName(), tag.getTagValue());
             }
+
+            Tag[] result = new Tag[tagMap.size()];
+            int i = 0;
+            for (Entry<String, String> entry : tagMap.entrySet()) {
+                result[i] = new Tag(entry.getKey(), entry.getValue());
+                i++;
+            }
+            tags = result;
         } else if (mpConfigAppTag != null && tags == null) {
             tags = new Tag[] { mpConfigAppTag };
         }
@@ -878,7 +887,7 @@ public class MetricRegistry30Impl implements MetricRegistry {
          */
         validateMetricNameToSingleType(metadata.getName(), builder);
 
-        combineApplicationTagsWithMPConfigAppTags(tags);
+        tags = combineApplicationTagsWithMPConfigAppTags(tags);
 
         MetricID metricID = new MetricID(metadata.getName(), tags);
         final Metric metric = metricsMID.get(metricID);
@@ -916,7 +925,7 @@ public class MetricRegistry30Impl implements MetricRegistry {
             }
         }
 
-        combineApplicationTagsWithMPConfigAppTags(tags);
+        tags = combineApplicationTagsWithMPConfigAppTags(tags);
 
         MetricID metricID = new MetricID(metadata.getName(), tags);
         final Metric metric = metricsMID.get(metricID);
@@ -1240,6 +1249,7 @@ public class MetricRegistry30Impl implements MetricRegistry {
         System.out.println("MetricRegistyr30Impl : getMetric() >" + metricIDWithMPConfigAppTags.toString());
 
         return metricsMID.get(metricIDWithMPConfigAppTags);
+        //return metricsMID.get(metricID);
     }
 
     @Override

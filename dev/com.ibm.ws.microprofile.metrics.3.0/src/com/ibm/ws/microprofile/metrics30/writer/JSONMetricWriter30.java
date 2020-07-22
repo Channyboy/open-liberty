@@ -13,6 +13,7 @@ package com.ibm.ws.microprofile.metrics30.writer;
 import java.io.Writer;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.eclipse.microprofile.metrics.ConcurrentGauge;
 import org.eclipse.microprofile.metrics.Counter;
@@ -24,6 +25,7 @@ import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.SimpleTimer;
+import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
 
 import com.ibm.json.java.JSONObject;
@@ -68,7 +70,17 @@ public class JSONMetricWriter30 extends JSONMetricWriter23 {
         //For each Metric that was returned
         for (Entry<MetricID, Metric> entry : metricMap.entrySet()) {
             MetricID metricID = entry.getKey();
+
             Map<String, String> tagsMap = metricID.getTags();
+            Tag[] globalTags = Util30.getCachedGlobalTags();
+            if (globalTags != null) {
+                TreeMap<String, String> tagsMapWithGlobalTags = new TreeMap<String, String>(tagsMap);
+                for (Tag t : globalTags) {
+                    tagsMapWithGlobalTags.put(t.getTagName(), t.getTagValue());
+                }
+                tagsMap = tagsMapWithGlobalTags;
+            }
+
             String metricName = metricID.getName();
             String metricNameWithTags = metricName;
             String tags = "";
@@ -120,6 +132,7 @@ public class JSONMetricWriter30 extends JSONMetricWriter23 {
                 }
                 metricNameWithTags = metricName + tags;
             }
+
             Metric metric = entry.getValue();
 
             if (Counter.class.isInstance(metric)) {

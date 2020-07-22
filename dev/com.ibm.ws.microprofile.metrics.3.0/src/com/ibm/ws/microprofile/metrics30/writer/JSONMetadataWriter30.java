@@ -12,9 +12,16 @@ package com.ibm.ws.microprofile.metrics30.writer;
 
 import java.io.Writer;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.eclipse.microprofile.metrics.Metadata;
+import org.eclipse.microprofile.metrics.Metric;
+import org.eclipse.microprofile.metrics.MetricID;
+import org.eclipse.microprofile.metrics.Tag;
 
+import com.ibm.json.java.JSONArray;
 import com.ibm.json.java.JSONObject;
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
@@ -60,5 +67,38 @@ public class JSONMetadataWriter30 extends JSONMetadataWriter implements OutputWr
         jsonObject.put("unit", sanitizeMetadata(metadata.getUnit()));
 
         return jsonObject;
+    }
+
+    @Override
+    protected JSONArray getJsonArrayTags(Map<MetricID, Metric> metricMap, String metricName) {
+        JSONArray jsonArray = new JSONArray();
+        //for each metric in metric map
+        for (MetricID metricIDSet : metricMap.keySet()) {
+            //that has matching names
+            if (metricIDSet.getName().equals(metricName)) {
+                JSONArray metricTagJsonArray = new JSONArray();
+                Map<String, String> tagsMap = metricIDSet.getTags();
+
+                Tag[] globalTags = Util30.getCachedGlobalTags();
+                if (globalTags != null) {
+                    TreeMap<String, String> tagsMapWithGlobalTags = new TreeMap<String, String>(tagsMap);
+                    for (Tag t : globalTags) {
+                        tagsMapWithGlobalTags.put(t.getTagName(), t.getTagValue());
+                    }
+                    tagsMap = tagsMapWithGlobalTags;
+                }
+
+                //of which the tagMap is not empty
+                if (tagsMap != null) {
+                    for (Entry<String, String> tagEntry : tagsMap.entrySet()) {
+                        metricTagJsonArray.add(tagEntry.getKey() + "=" + tagEntry.getValue());
+                    }
+                    if (metricTagJsonArray.size() != 0) {
+                        jsonArray.add(metricTagJsonArray);
+                    }
+                }
+            }
+        }
+        return jsonArray;
     }
 }

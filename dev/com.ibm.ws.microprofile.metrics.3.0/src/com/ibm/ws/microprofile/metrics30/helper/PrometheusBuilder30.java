@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.ibm.ws.microprofile.metrics30.helper;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import org.eclipse.microprofile.metrics.ConcurrentGauge;
@@ -40,7 +39,7 @@ public class PrometheusBuilder30 extends PrometheusBuilder23 {
 
     protected static String resolveTagsAsStringWithGlobalTags(MetricID mid) {
         org.eclipse.microprofile.metrics.Tag[] globalTags = Util30.getCachedGlobalTags();
-        if (globalTags != null || globalTags.length != 0) {
+        if (globalTags != null && globalTags.length != 0) {
             org.eclipse.microprofile.metrics.Tag[] applicationTags = mid.getTagsAsArray();
             org.eclipse.microprofile.metrics.Tag[] combinedTags = new org.eclipse.microprofile.metrics.Tag[globalTags.length + applicationTags.length];
 
@@ -55,10 +54,10 @@ public class PrometheusBuilder30 extends PrometheusBuilder23 {
 
             MetricID temp = new MetricID("temporary", combinedTags);
 
-            System.out.println("combined " + temp.getTagsAsString() + " \n\t globalTags: " + Arrays.toString(globalTags));
-            System.out.println("original " + mid.getTagsAsString());
-            //return temp.getTagsAsString();
-            return mid.getTagsAsString();
+//            System.out.println("combined " + temp.getTagsAsString() + " \n\t globalTags: " + Arrays.toString(globalTags));
+//            System.out.println("original " + mid.getTagsAsString());
+            return temp.getTagsAsString();
+            //return mid.getTagsAsString();
         } else {
             return mid.getTagsAsString();
         }
