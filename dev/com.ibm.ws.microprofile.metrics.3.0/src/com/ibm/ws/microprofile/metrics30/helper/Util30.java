@@ -21,6 +21,7 @@ import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.SimpleTimer;
+import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
 
 import com.ibm.websphere.ras.Tr;
@@ -30,6 +31,7 @@ import com.ibm.ws.microprofile.metrics.exceptions.EmptyRegistryException;
 import com.ibm.ws.microprofile.metrics.exceptions.NoSuchMetricException;
 import com.ibm.ws.microprofile.metrics.exceptions.NoSuchRegistryException;
 import com.ibm.ws.microprofile.metrics23.helper.Util23;
+import com.ibm.ws.microprofile.metrics30.impl.MetricRegistry30Impl;
 
 /**
  *
@@ -39,6 +41,11 @@ public class Util30 extends Util23 {
 
     public static Map<MetricID, Metric> getMetricsAsMap(String registryName, String metricName) throws NoSuchRegistryException, NoSuchMetricException, EmptyRegistryException {
         MetricRegistry registry = getRegistry(registryName);
+
+        MetricRegistry30Impl registry30;
+        if (registry instanceof MetricRegistry30Impl) {
+            registry30 = (MetricRegistry30Impl) registry;
+        }
 
         SortedSet<MetricID> metricIDSet = registry.getMetricIDs();
 
@@ -63,6 +70,10 @@ public class Util30 extends Util23 {
             }
         }
         return returnMap;
+    }
+
+    public static Tag[] getCachedGlobalTags() {
+        return MetricRegistry30Impl.getCachedGlobalTags();
     }
 
     public static Map<MetricID, Metric> getMetricsAsMap(String registryName) throws NoSuchRegistryException, EmptyRegistryException {
