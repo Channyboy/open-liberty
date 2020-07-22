@@ -46,8 +46,6 @@ import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
-import javax.enterprise.inject.spi.ProcessProducerField;
-import javax.enterprise.inject.spi.ProcessProducerMethod;
 import javax.enterprise.inject.spi.WithAnnotations;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.Nonbinding;
@@ -111,16 +109,16 @@ public class MetricsExtension implements Extension, WebSphereCDIExtension {
         pat.setAnnotatedType(new AnnotatedTypeDecorator<>(pat.getAnnotatedType(), METRICS_BINDING));
     }
 
-    protected void metricProducerField(@Observes ProcessProducerField<? extends Metric, ?> ppf) {
-        metrics.put(ppf.getBean(), ppf.getAnnotatedProducerField());
-    }
-
-    protected void metricProducerMethod(@Observes ProcessProducerMethod<? extends Metric, ?> ppm) {
-        // Skip the Metrics CDI alternatives
-        if (!ppm.getBean().getBeanClass().equals(MetricProducer.class)) {
-            metrics.put(ppm.getBean(), ppm.getAnnotatedProducerMethod());
-        }
-    }
+//    protected void metricProducerField(@Observes ProcessProducerField<? extends Metric, ?> ppf) {
+//        metrics.put(ppf.getBean(), ppf.getAnnotatedProducerField());
+//    }
+//
+//    protected void metricProducerMethod(@Observes ProcessProducerMethod<? extends Metric, ?> ppm) {
+//        // Skip the Metrics CDI alternatives
+//        if (!ppm.getBean().getBeanClass().equals(MetricProducer.class)) {
+//            metrics.put(ppm.getBean(), ppm.getAnnotatedProducerMethod());
+//        }
+//    }
 
     protected void defaultMetricRegistry(@Observes AfterBeanDiscovery abd, BeanManager manager) {
         if (manager.getBeans(MetricRegistry.class).isEmpty())

@@ -15,6 +15,7 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -179,6 +180,8 @@ public class MetricRegistry30Impl implements MetricRegistry {
 
     @FFDCIgnore({ NoSuchElementException.class })
     private <T extends Metric> T register(Metadata metadata, T metric, boolean resolvedMPConfigTags, Tag... tags) throws IllegalArgumentException {
+
+        System.out.println("MetricRegistry30Impl regging " + metadata.getName());
 
         /*
          * Checks if MetaData with the given name already exists or not.
@@ -870,7 +873,7 @@ public class MetricRegistry30Impl implements MetricRegistry {
          *
          * Otherwise if only MP Config tags are null and/or the incoming app tags are null then return tags as is
          */
-        if (mpConfigTags != null && tags != null) {
+        if (mpConfigTags != null && tags != null && tags.length > 0) {
             int originalTagsArrayLength = tags.length;
             tags = Arrays.copyOf(tags, tags.length + mpConfigTags.length);
             System.arraycopy(mpConfigTags, 0, tags, originalTagsArrayLength, mpConfigTags.length);
@@ -878,13 +881,35 @@ public class MetricRegistry30Impl implements MetricRegistry {
             tags = mpConfigTags;
         }
 
-        if (tags == null)
-            System.out.println("combinApplicationTagsWithMPConfigTags : null");
-        else {
-            for (Tag t : tags) {
-                System.out.println(t);
+//        if (tags == null)
+//            System.out.println("combinApplicationTagsWithMPConfigTags : null");
+//        else {
+//            for (Tag t : tags) {
+//                System.out.println(t);
+//            }
+//            System.out.println("finished\n");
+//        }
+
+        return tags;
+
+    }
+
+    private Tag[] combineApplicationTagsWithMPConfigTags_wMap(Tag... tags) {
+        Tag[] mpConfigTags = resolveMPConfigTags();
+
+        //does not need a treemap - will sort when the API MetricID is created
+        Map<String, String> tagMap = new HashMap<String, String>();
+        if (mpConfigTags != null && tags != null) {
+            for (Tag t : mpConfigTags) {
+                tagMap.put(t.getTagName(), t.getTagValue());
             }
-            System.out.println("finished\n");
+
+            //developer provided tags will over write (similar to old behaviour)
+            for (Tag t : tags) {
+                tagMap.put(t.getTagName(), t.getTagValue());
+            }
+        } else if (mpConfigTags != null && tags == null) {
+            tags = mpConfigTags;
         }
 
         return tags;
