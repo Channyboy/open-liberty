@@ -15,7 +15,7 @@ Subsystem-Name: MicroProfile Metrics 3.0
  com.ibm.websphere.appserver.mpConfig-1.4; ibm.tolerates:=1.3
 -bundles=com.ibm.ws.microprofile.metrics.common, \
  com.ibm.ws.microprofile.metrics.3.0, \
- com.ibm.ws.microprofile.metrics.cdi.3.0, \
+ io.openliberty.microprofile.metrics.internal.cdi.3.0, \
  io.openliberty.microprofile.metrics.internal.private, \
  io.openliberty.microprofile.metrics.internal.public
 kind=noship
