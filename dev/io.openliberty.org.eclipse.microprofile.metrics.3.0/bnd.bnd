@@ -11,7 +11,7 @@
 -include ~../cnf/resources/bnd/bundle.props
 bVersion=1.0
 
-Bundle-SymbolicName: com.ibm.websphere.org.eclipse.microprofile.metrics.3.0; singleton:=true
+Bundle-SymbolicName: io.openliberty.org.eclipse.microprofile.metrics.3.0; singleton:=true
 
 Import-Package: \
   javax.enterprise.util; version="[1.1,3)",\
