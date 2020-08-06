@@ -12,7 +12,7 @@
  *
  */
 @org.osgi.annotation.versioning.Version("1.0")
-@TraceOptions(traceGroup = "METRICS", messageBundle = "io.openliberty.microprofile.metrics.internal.cdi.resources.MetricsCDI")
-package io.openliberty.microprofile.metrics.cdi30.interceptors;
+@TraceOptions(traceGroup = "METRICS", messageBundle = "io.openliberty.microprofile.metrics.internal.resources.Metrics")
+package io.openliberty.microprofile.metrics30.internal.impl;
 
 import com.ibm.websphere.ras.annotation.TraceOptions;

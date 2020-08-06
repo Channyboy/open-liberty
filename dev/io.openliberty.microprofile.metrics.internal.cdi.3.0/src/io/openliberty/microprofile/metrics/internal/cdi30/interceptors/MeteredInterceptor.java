@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corporation and others.
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package io.openliberty.microprofile.metrics.cdi30.interceptors;
+package io.openliberty.microprofile.metrics.internal.cdi30.interceptors;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Member;
@@ -36,18 +36,18 @@ import javax.interceptor.AroundTimeout;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
+import org.eclipse.microprofile.metrics.Meter;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
-import org.eclipse.microprofile.metrics.SimpleTimer;
-import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
+import org.eclipse.microprofile.metrics.annotation.Metered;
 
 import io.astefanutti.metrics.cdi30.MetricResolver;
 import io.openliberty.microprofile.metrics.internal.cdi30.helper.Utils;
 
-@SimplyTimed
+@Metered
 @Interceptor
 @Priority(Interceptor.Priority.LIBRARY_BEFORE + 10)
-public class SimplyTimedInterceptor {
+public class MeteredInterceptor {
 
     private final Bean<?> bean;
 
@@ -56,39 +56,36 @@ public class SimplyTimedInterceptor {
     private final MetricResolver resolver;
 
     @Inject
-    private SimplyTimedInterceptor(@Intercepted Bean<?> bean, MetricRegistry registry, MetricResolver resolver) {
+    private MeteredInterceptor(@Intercepted Bean<?> bean, MetricRegistry registry, MetricResolver resolver) {
         this.bean = bean;
         this.registry = registry;
         this.resolver = resolver;
     }
 
     @AroundConstruct
-    private Object timedConstructor(InvocationContext context) throws Exception {
-        return simplyTimedCallable(context, context.getConstructor());
+    private Object meteredConstructor(InvocationContext context) throws Exception {
+        return meteredCallable(context, context.getConstructor());
     }
 
     @AroundInvoke
-    private Object timedMethod(InvocationContext context) throws Exception {
-        return simplyTimedCallable(context, context.getMethod());
+    private Object meteredMethod(InvocationContext context) throws Exception {
+        return meteredCallable(context, context.getMethod());
     }
 
     @AroundTimeout
-    private Object timedTimeout(InvocationContext context) throws Exception {
-        return simplyTimedCallable(context, context.getMethod());
+    private Object meteredTimeout(InvocationContext context) throws Exception {
+        return meteredCallable(context, context.getMethod());
     }
 
-    private <E extends Member & AnnotatedElement> Object simplyTimedCallable(InvocationContext context, E element) throws Exception {
-        MetricResolver.Of<SimplyTimed> simplyTimed = resolver.simplyTimed(bean.getBeanClass(), element);
-        MetricID MetricID = new MetricID(simplyTimed.metricName(), Utils.tagsToTags(simplyTimed.tags()));
-        SimpleTimer simpleTimer = (SimpleTimer) registry.getMetric(MetricID);
-        if (simpleTimer == null)
-            throw new IllegalStateException("No timer with metricID [" + MetricID + "] found in registry [" + registry + "]");
+    private <E extends Member & AnnotatedElement> Object meteredCallable(InvocationContext context, E element) throws Exception {
+        MetricResolver.Of<Metered> metered = resolver.metered(bean.getBeanClass(), element);
+        MetricID tmid = new MetricID(metered.metricName(), Utils.tagsToTags(metered.tags()));
+        Meter meter = (Meter) registry.getMetric(tmid);
 
-        SimpleTimer.Context time = simpleTimer.time();
-        try {
-            return context.proceed();
-        } finally {
-            time.stop();
-        }
+        if (meter == null)
+            throw new IllegalStateException("No meter with metricID [" + tmid + "] found in registry [" + registry + "]");
+
+        meter.mark();
+        return context.proceed();
     }
 }

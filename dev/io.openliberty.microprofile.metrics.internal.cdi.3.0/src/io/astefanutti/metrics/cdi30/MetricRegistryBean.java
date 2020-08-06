@@ -44,7 +44,7 @@ import javax.enterprise.util.AnnotationLiteral;
 
 import org.eclipse.microprofile.metrics.MetricRegistry;
 
-import com.ibm.ws.microprofile.metrics30.impl.MetricRegistry30Impl;
+import io.openliberty.microprofile.metrics30.internal.impl.MetricRegistry30Impl;
 
 public final class MetricRegistryBean implements Bean<MetricRegistry30Impl>, PassivationCapable {
 
