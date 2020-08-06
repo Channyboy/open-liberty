@@ -24,7 +24,7 @@ Export-Package: \
 	io.astefanutti.metrics.cdi30,\
 	com.ibm.ws.microprofile.metrics.cdi.decorator,\
 	com.ibm.ws.microprofile.metrics.cdi.binding,\
-	io.openliberty.microprofile.metrics.cdi30.interceptors,\
+	io.openliberty.microprofile.metrics.internal.cdi30.interceptors,\
 	io.openliberty.microprofile.metrics.internal.cdi30.producer,\
 	io.openliberty.microprofile.metrics.internal.cdi30.helper
 
@@ -55,7 +55,7 @@ WS-TraceGroup: METRICS
 	com.ibm.websphere.org.eclipse.microprofile.config.1.4;version=latest,\
 	com.ibm.ws.classloading;version=latest,\
 	com.ibm.ws.kernel.service;version=latest,\
-	com.ibm.ws.microprofile.metrics.3.0;version=latest,\
+	io.openliberty.microprofile.metrics.internal.3.0;version=latest,\
 	io.openliberty.org.eclipse.microprofile.metrics.3.0;version=latest,\
 	com.ibm.websphere.org.osgi.core;version=latest,\
 	com.ibm.ws.org.osgi.annotation.versioning;version=latest,\

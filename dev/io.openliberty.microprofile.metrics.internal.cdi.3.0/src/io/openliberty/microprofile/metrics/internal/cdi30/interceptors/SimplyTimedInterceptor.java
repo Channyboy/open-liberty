@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2020 IBM Corporation and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package io.openliberty.microprofile.metrics.cdi30.interceptors;
+package io.openliberty.microprofile.metrics.internal.cdi30.interceptors;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Member;
@@ -36,18 +36,18 @@ import javax.interceptor.AroundTimeout;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
-import org.eclipse.microprofile.metrics.Counter;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
-import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.SimpleTimer;
+import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
 
 import io.astefanutti.metrics.cdi30.MetricResolver;
 import io.openliberty.microprofile.metrics.internal.cdi30.helper.Utils;
 
-@Counted
+@SimplyTimed
 @Interceptor
 @Priority(Interceptor.Priority.LIBRARY_BEFORE + 10)
-public class CountedInterceptor {
+public class SimplyTimedInterceptor {
 
     private final Bean<?> bean;
 
@@ -56,35 +56,39 @@ public class CountedInterceptor {
     private final MetricResolver resolver;
 
     @Inject
-    private CountedInterceptor(@Intercepted Bean<?> bean, MetricRegistry registry, MetricResolver resolver) {
+    private SimplyTimedInterceptor(@Intercepted Bean<?> bean, MetricRegistry registry, MetricResolver resolver) {
         this.bean = bean;
         this.registry = registry;
         this.resolver = resolver;
     }
 
     @AroundConstruct
-    private Object countedConstructor(InvocationContext context) throws Exception {
-        return countedCallable(context, context.getConstructor());
+    private Object timedConstructor(InvocationContext context) throws Exception {
+        return simplyTimedCallable(context, context.getConstructor());
     }
 
     @AroundInvoke
-    private Object countedMethod(InvocationContext context) throws Exception {
-        return countedCallable(context, context.getMethod());
+    private Object timedMethod(InvocationContext context) throws Exception {
+        return simplyTimedCallable(context, context.getMethod());
     }
 
     @AroundTimeout
-    private Object countedTimeout(InvocationContext context) throws Exception {
-        return countedCallable(context, context.getMethod());
+    private Object timedTimeout(InvocationContext context) throws Exception {
+        return simplyTimedCallable(context, context.getMethod());
     }
 
-    private <E extends Member & AnnotatedElement> Object countedCallable(InvocationContext context, E element) throws Exception {
-        MetricResolver.Of<Counted> counted = resolver.counted(bean.getBeanClass(), element);
-        MetricID tmid = new MetricID(counted.metricName(), Utils.tagsToTags(counted.tags()));
-        Counter counter = (Counter) registry.getMetric(tmid);
-        if (counter == null)
-            throw new IllegalStateException("No counter with metricID [" + tmid + "] found in registry [" + registry + "]");
+    private <E extends Member & AnnotatedElement> Object simplyTimedCallable(InvocationContext context, E element) throws Exception {
+        MetricResolver.Of<SimplyTimed> simplyTimed = resolver.simplyTimed(bean.getBeanClass(), element);
+        MetricID MetricID = new MetricID(simplyTimed.metricName(), Utils.tagsToTags(simplyTimed.tags()));
+        SimpleTimer simpleTimer = (SimpleTimer) registry.getMetric(MetricID);
+        if (simpleTimer == null)
+            throw new IllegalStateException("No timer with metricID [" + MetricID + "] found in registry [" + registry + "]");
 
-        counter.inc();
-        return context.proceed();
+        SimpleTimer.Context time = simpleTimer.time();
+        try {
+            return context.proceed();
+        } finally {
+            time.stop();
+        }
     }
 }
