@@ -21,9 +21,9 @@ Import-Package: \
 	javax.inject;version='[1.0,2.1)',\
 	*
 
-Include-Resource: \
-	resources,\
-    META-INF=resources/META-INF
+#Include-Resource: \
+#	resources,\
+#    META-INF=resources/META-INF
 Export-Package: \
   io.smallrye.metrics.*;version=3.0
 
@@ -59,7 +59,12 @@ WS-TraceGroup: METRICS
 	com.ibm.ws.kernel.service;version=latest,\
 	com.ibm.websphere.org.osgi.core;version=latest,\
     com.ibm.websphere.javaee.concurrent.1.0;version=latest,\
-    com.ibm.ws.logging;version=latest
+    com.ibm.ws.logging;version=latest,\
+    org.jboss.logging:jboss-logging-annotations;version=2.2.1.Final,\
+    org.jboss.logging:jboss-logging-processor;version=2.2.1.Final,\
+    com.ibm.ws.org.jboss.logging;version=latest,\
+    io.micrometer:micrometer-core;version=1.5.5,\
+    io.micrometer:micrometer-registry-prometheus;version=1.5.5
 	
 instrument.disabled: true
 
