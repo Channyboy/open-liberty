@@ -105,6 +105,8 @@ io.jaegertracing:jaeger-thrift:0.34.0
 io.jaegertracing:jaeger-thrift:1.2.0
 io.jaegertracing:jaeger-tracerresolver:0.34.0
 io.jaegertracing:jaeger-tracerresolver:1.2.0
+io.micrometer:micrometer-core:1.5.5
+io.micrometer:micrometer-registry-prometheus:1.5.5
 io.netty:netty-buffer:4.1.51.Final
 io.netty:netty-codec-http2:4.1.51.Final
 io.netty:netty-codec-http:4.1.51.Final
@@ -431,6 +433,8 @@ org.jboss.arquillian.container:arquillian-container-test-spi:1.3.0.Final
 org.jboss.arquillian.core:arquillian-core-api:1.3.0.Final
 org.jboss.arquillian.core:arquillian-core-spi:1.3.0.Final
 org.jboss.arquillian.test:arquillian-test-spi:1.3.0.Final
+org.jboss.logging:jboss-logging-annotations:2.2.1.Final
+org.jboss.logging:jboss-logging-processor:2.2.1.Final
 org.jboss.logging:jboss-logging:3.4.1.Final
 org.jboss.narayana.arjunacore:arjuna:5.10.6.Final
 org.jboss.narayana.rts:lra-client:5.10.6.Final
