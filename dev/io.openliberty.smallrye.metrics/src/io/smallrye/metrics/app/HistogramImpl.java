@@ -89,4 +89,9 @@ public class HistogramImpl implements Histogram {
     public Snapshot getSnapshot() {
         return reservoir.getSnapshot();
     }
+
+    @Override
+    public long getSum() {
+        return 0L;
+    }
 }

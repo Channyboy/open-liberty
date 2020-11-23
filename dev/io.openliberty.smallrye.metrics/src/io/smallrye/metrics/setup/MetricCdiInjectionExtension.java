@@ -29,13 +29,15 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
 
+import com.ibm.ws.cdi.extension.WebSphereCDIExtension;
+
 import io.smallrye.metrics.MetricProducer;
 import io.smallrye.metrics.MetricRegistries;
 import io.smallrye.metrics.MetricsRequestHandler;
 import io.smallrye.metrics.SmallRyeMetricsLogging;
 import io.smallrye.metrics.interceptors.MetricNameFactory;
 
-public class MetricCdiInjectionExtension implements Extension {
+public class MetricCdiInjectionExtension implements Extension, WebSphereCDIExtension {
 
     void logVersion(@Observes BeforeBeanDiscovery bbd) {
         SmallRyeMetricsLogging.log.logSmallRyeMetricsVersion(getImplementationVersion().orElse("unknown"));
@@ -44,10 +46,10 @@ public class MetricCdiInjectionExtension implements Extension {
     void registerAnnotatedTypes(@Observes BeforeBeanDiscovery bbd, BeanManager manager) {
         String extensionName = MetricCdiInjectionExtension.class.getName();
         for (Class clazz : new Class[] {
-                MetricProducer.class,
-                MetricNameFactory.class,
-                MetricRegistries.class,
-                MetricsRequestHandler.class
+                                         MetricProducer.class,
+                                         MetricNameFactory.class,
+                                         MetricRegistries.class,
+                                         MetricsRequestHandler.class
         }) {
             bbd.addAnnotatedType(manager.createAnnotatedType(clazz), extensionName + "_" + clazz.getName());
         }

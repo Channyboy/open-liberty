@@ -51,38 +51,38 @@ public class MetricsRequestHandler {
     }
 
     /**
-     * @param requestPath e.g. request.getRequestURI for an HttpServlet
-     * @param method http method (GET, POST, etc)
+     * @param requestPath   e.g. request.getRequestURI for an HttpServlet
+     * @param method        http method (GET, POST, etc)
      * @param acceptHeaders accepted content types
-     * @param responder a method that returns a response to the caller. See {@link Responder}
+     * @param responder     a method that returns a response to the caller. See {@link Responder}
      * @throws IOException rethrows IOException if thrown by the responder
      *
-     *         You can find example usage in the tests, in io.smallrye.metrics.tck.rest.MetricsHttpServlet
+     *                         You can find example usage in the tests, in io.smallrye.metrics.tck.rest.MetricsHttpServlet
      */
     public void handleRequest(String requestPath,
-            String method,
-            Stream<String> acceptHeaders,
-            Responder responder) throws IOException {
+                              String method,
+                              Stream<String> acceptHeaders,
+                              Responder responder) throws IOException {
         handleRequest(requestPath, "/metrics", method, acceptHeaders, responder);
     }
 
     /**
      *
-     * @param requestPath e.g. request.getRequestURI for an HttpServlet
-     * @param contextRoot the root at which Metrics are exposed, usually "/metrics"
-     * @param method http method (GET, POST, etc)
+     * @param requestPath   e.g. request.getRequestURI for an HttpServlet
+     * @param contextRoot   the root at which Metrics are exposed, usually "/metrics"
+     * @param method        http method (GET, POST, etc)
      * @param acceptHeaders accepted content types
-     * @param responder a method that returns a response to the caller. See {@link Responder}
+     * @param responder     a method that returns a response to the caller. See {@link Responder}
      *
      * @throws IOException rethrows IOException if thrown by the responder
      *
-     *         You can find example usage in the tests, in io.smallrye.metrics.tck.rest.MetricsHttpServlet
+     *                         You can find example usage in the tests, in io.smallrye.metrics.tck.rest.MetricsHttpServlet
      */
     public void handleRequest(String requestPath,
-            String contextRoot,
-            String method,
-            Stream<String> acceptHeaders,
-            Responder responder) throws IOException {
+                              String contextRoot,
+                              String method,
+                              Stream<String> acceptHeaders,
+                              Responder responder) throws IOException {
         Exporter exporter = obtainExporter(method, acceptHeaders, responder);
         if (exporter == null) {
             return;
@@ -90,8 +90,8 @@ public class MetricsRequestHandler {
 
         if (!requestPath.startsWith(contextRoot)) {
             responder.respondWith(500, "The expected context root of metrics is "
-                    + contextRoot + ", but a request with a different path was routed to MetricsRequestHandler",
-                    Collections.emptyMap());
+                                       + contextRoot + ", but a request with a different path was routed to MetricsRequestHandler",
+                                  Collections.emptyMap());
             return;
         }
 
@@ -167,9 +167,9 @@ public class MetricsRequestHandler {
     /**
      * Determine which exporter we want.
      *
-     * @param method http method (GET, POST, etc)
+     * @param method        http method (GET, POST, etc)
      * @param acceptHeaders accepted content types
-     * @param responder the responder to use if an error occurs
+     * @param responder     the responder to use if an error occurs
      * @return An exporter instance. If an exporter cannot be obtained for some reason, this method will use the responder
      *         to inform the user and will return null.
      */
@@ -183,7 +183,7 @@ public class MetricsRequestHandler {
                 return new OpenMetricsExporter();
             } else {
                 responder.respondWith(405, "OPTIONS method is only allowed with application/json media type.",
-                        Collections.emptyMap());
+                                      Collections.emptyMap());
                 return null;
             }
         } else {
@@ -206,13 +206,13 @@ public class MetricsRequestHandler {
                         return new OpenMetricsExporter();
                     } else {
                         responder.respondWith(406, "OPTIONS method is only allowed with application/json media type.",
-                                Collections.emptyMap());
+                                              Collections.emptyMap());
                         return null;
                     }
                 }
             } else {
                 responder.respondWith(406, "Couldn't determine a suitable media type for the given Accept header.",
-                        Collections.emptyMap());
+                                      Collections.emptyMap());
                 return null;
             }
         }
@@ -253,6 +253,7 @@ public class MetricsRequestHandler {
 
         // Iterate over the list and find the best match
         for (WTTuple tuple : tupleList) {
+            tuple.type = tuple.type.trim(); //IBM: Need to trim.
             if (!isKnownMediaType(tuple)) {
                 continue;
             }
@@ -283,12 +284,12 @@ public class MetricsRequestHandler {
      */
     public interface Responder {
         /**
-         * @param status http status code
+         * @param status  http status code
          * @param message message to be returned
          * @param headers a map of http headers
          * @throws IOException this method may be implemented to throw an IOException.
-         *         In such case the {@link MetricsRequestHandler#handleRequest(String, String, Stream, Responder)} will
-         *         propagate the exception
+         *                         In such case the {@link MetricsRequestHandler#handleRequest(String, String, Stream, Responder)} will
+         *                         propagate the exception
          */
         void respondWith(int status, String message, Map<String, String> headers) throws IOException;
     }
