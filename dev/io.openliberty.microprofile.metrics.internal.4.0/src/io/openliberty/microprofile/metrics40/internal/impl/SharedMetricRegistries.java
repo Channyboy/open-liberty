@@ -15,9 +15,9 @@ import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.MetricRegistry.Type;
 import org.osgi.service.component.annotations.Component;
 
-import com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries;
-
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.smallrye.metrics.MetricRegistries;
 import io.smallrye.metrics.mpmetrics.MpMetricRegistryAdapter;
 
@@ -25,10 +25,22 @@ import io.smallrye.metrics.mpmetrics.MpMetricRegistryAdapter;
  * A map of shared, named metric registries.
  */
 @Component(service = SharedMetricRegistries.class, immediate = true)
-public class SharedMetricRegistries40 {
+public class SharedMetricRegistries {
+
+//    private static PrometheusMeterRegistry pmr = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+    static {
+        CompositeMeterRegistry cid = Metrics.globalRegistry;
+        System.out.println(cid.toString());
+        System.out.println(io.micrometer.core.instrument.Gauge.class);
+        System.out.println(MeterRegistry.class);
+        System.out.println(io.prometheus.client.Counter.class);
+        //System.out.println(io.micrometer.prometheus.PrometheusMeterRegistry.class);
+    }
 
     public static void clear() {
         MetricRegistries.dropAll();
+
     }
 
     public static void remove(String key) {
@@ -69,6 +81,10 @@ public class SharedMetricRegistries40 {
     }
 
     public MetricRegistry getOrCreate(String name) {
+        //if (pmr == null) {
+        //pmr = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        //Metrics.addRegistry(pmr);
+        //}
         Type type = typeOf(name);
         final MetricRegistry existingMetricRegistry = MetricRegistries.get(type);
 

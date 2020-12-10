@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 IBM Corporation and others.
+ * Copyright (c) 2017 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,10 +8,11 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package io.openliberty.microprofile.metrics.internal.privateapi;
+/**
+ * @version 1.0
+ */
+@org.osgi.annotation.versioning.Version("1.0")
+@TraceOptions(traceGroup = "METRICS", messageBundle = "com.ibm.ws.microprofile.metrics.resources.Metrics")
+package io.openliberty.microprofile.metrics40.helper;
 
-import io.openliberty.microprofile.metrics40.internal.BaseMetricsRESTProxyServlet;
-
-public class PrivateMetricsRESTProxyServlet extends BaseMetricsRESTProxyServlet {
-    private static final long serialVersionUID = 1L;
-}
+import com.ibm.websphere.ras.annotation.TraceOptions;

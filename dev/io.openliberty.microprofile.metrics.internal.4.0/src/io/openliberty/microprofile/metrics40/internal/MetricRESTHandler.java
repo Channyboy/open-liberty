@@ -19,12 +19,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
-import com.ibm.ws.microprofile.metrics.Constants;
-import com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries;
 import com.ibm.wsspi.rest.handler.RESTHandler;
 import com.ibm.wsspi.rest.handler.RESTRequest;
 import com.ibm.wsspi.rest.handler.RESTResponse;
 
+import io.openliberty.microprofile.metrics40.internal.impl.SharedMetricRegistries;
 import io.smallrye.metrics.MetricsRequestHandler;
 
 /**

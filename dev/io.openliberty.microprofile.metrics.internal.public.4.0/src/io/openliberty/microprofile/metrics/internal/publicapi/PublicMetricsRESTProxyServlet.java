@@ -10,7 +10,7 @@
  *******************************************************************************/
 package io.openliberty.microprofile.metrics.internal.publicapi;
 
-import com.ibm.ws.microprofile.metrics.BaseMetricsRESTProxyServlet;
+import io.openliberty.microprofile.metrics40.internal.BaseMetricsRESTProxyServlet;
 
 public class PublicMetricsRESTProxyServlet extends BaseMetricsRESTProxyServlet {
     private static final long serialVersionUID = 1L;

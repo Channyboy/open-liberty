@@ -21,8 +21,8 @@ import org.osgi.service.component.annotations.Reference;
 import com.ibm.ws.container.service.app.deploy.ApplicationInfo;
 import com.ibm.ws.container.service.state.ApplicationStateListener;
 import com.ibm.ws.container.service.state.StateChangeException;
-import com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries;
 
+import io.openliberty.microprofile.metrics40.internal.impl.SharedMetricRegistries;
 import io.smallrye.metrics.mpmetrics.MpMetricRegistryAdapter;
 
 @Component(service = { ApplicationStateListener.class }, configurationPolicy = ConfigurationPolicy.IGNORE, immediate = true)

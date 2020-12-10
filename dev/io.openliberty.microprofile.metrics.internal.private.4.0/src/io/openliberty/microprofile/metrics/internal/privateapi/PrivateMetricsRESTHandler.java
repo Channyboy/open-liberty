@@ -21,15 +21,12 @@ import org.osgi.service.component.annotations.Reference;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
-import com.ibm.ws.microprofile.metrics.BaseMetrics;
-import com.ibm.ws.microprofile.metrics.BaseMetricsHandler;
-import com.ibm.ws.microprofile.metrics.Constants;
-import com.ibm.ws.microprofile.metrics.WriterFactory;
-import com.ibm.ws.microprofile.metrics.helper.Util;
-import com.ibm.ws.microprofile.metrics.impl.SharedMetricRegistries;
 import com.ibm.wsspi.rest.handler.RESTHandler;
 
+import io.openliberty.microprofile.metrics40.helper.Util;
+import io.openliberty.microprofile.metrics40.internal.Constants;
 import io.openliberty.microprofile.metrics40.internal.MetricRESTHandler;
+import io.openliberty.microprofile.metrics40.internal.impl.SharedMetricRegistries;
 import io.smallrye.metrics.MetricsRequestHandler;
 
 @Component(service = { RESTHandler.class }, configurationPolicy = ConfigurationPolicy.IGNORE, immediate = true, property = { "service.vendor=IBM",
@@ -43,7 +40,7 @@ public class PrivateMetricsRESTHandler extends MetricRESTHandler {
 
     @Activate
     protected void activate(ComponentContext context, Map<String, Object> properties) {
-    	
+
     	if (metricsRequestHandler == null) {
     		metricsRequestHandler = new MetricsRequestHandler();
     	}
@@ -52,6 +49,7 @@ public class PrivateMetricsRESTHandler extends MetricRESTHandler {
             sharedMetricRegistry.getOrCreate(registry);
         }
         Util.SHARED_METRIC_REGISTRIES = sharedMetricRegistry;
+
     }
 
     @Reference

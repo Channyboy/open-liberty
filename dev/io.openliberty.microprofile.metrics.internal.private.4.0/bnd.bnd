@@ -46,7 +46,6 @@ WS-TraceGroup: METRICS
 	io.openliberty.org.eclipse.microprofile.metrics.3.0;version=latest,\
 	com.ibm.websphere.rest.handler;version=latest,\
 	com.ibm.ws.logging;version=latest,\
-	com.ibm.ws.microprofile.metrics;version=latest,\
 	io.openliberty.microprofile.metrics.internal.4.0;version=latest,\
 	com.ibm.ws.org.osgi.annotation.versioning;version=latest,\
 	com.ibm.wsspi.org.osgi.service.component;version=latest,\
