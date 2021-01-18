@@ -38,6 +38,7 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
     private Map<String, MpMetadata> metadataMap = new ConcurrentHashMap<>();
 
     public MpMetricRegistryAdapter(Type type, MeterRegistry registry) {
+
         this.type = type;
         this.registry = registry;
     }
@@ -60,352 +61,352 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
     @Override
     public Counter counter(String name) {
         return internalCounter(internalGetMetadata(name, MetricType.COUNTER),
-                new MetricDescriptor(name, scopeTags()));
+                               new MetricDescriptor(name, scopeTags()));
     }
 
     @Override
     public Counter counter(String name, Tag... tags) {
         return internalCounter(internalGetMetadata(name, MetricType.COUNTER),
-                new MetricDescriptor(name, scopeTags(tags)));
+                               new MetricDescriptor(name, scopeTags(tags)));
     }
 
     @Override
     public Counter counter(MetricID metricID) {
         String name = metricID.getName();
         return internalCounter(internalGetMetadata(name, MetricType.COUNTER),
-                new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
+                               new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
     public Counter counter(Metadata metadata) {
         return internalCounter(internalGetMetadata(metadata, MetricType.COUNTER),
-                new MetricDescriptor(metadata.getName(), scopeTags()));
+                               new MetricDescriptor(metadata.getName(), scopeTags()));
     }
 
     @Override
     public Counter counter(Metadata metadata, Tag... tags) {
         return internalCounter(internalGetMetadata(metadata, MetricType.COUNTER),
-                new MetricDescriptor(metadata.getName(), scopeTags(tags)));
+                               new MetricDescriptor(metadata.getName(), scopeTags(tags)));
     }
 
     Counter interceptorCounter(Metadata metadata, String... tags) {
         return internalCounter(internalGetMetadata(metadata, MetricType.COUNTER),
-                new MetricDescriptor(metadata.getName(), tags));
+                               new MetricDescriptor(metadata.getName(), tags));
     }
 
     Counter injectedCounter(org.eclipse.microprofile.metrics.annotation.Metric annotation) {
         return internalCounter(
-                internalGetMetadata(annotation.name(), MetricType.COUNTER).merge(annotation),
-                new MetricDescriptor(annotation.name(), annotation.tags()));
+                               internalGetMetadata(annotation.name(), MetricType.COUNTER).merge(annotation),
+                               new MetricDescriptor(annotation.name(), annotation.tags()));
     }
 
     CounterAdapter internalCounter(MpMetadata metadata, MetricDescriptor id) {
         CounterAdapter result = checkCast(CounterAdapter.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new CounterAdapter()));
+                                          constructedMeters.computeIfAbsent(id, k -> new CounterAdapter()));
         return result.register(metadata, id, registry);
     }
 
     @Override
     public ConcurrentGauge concurrentGauge(String name) {
         return internalConcurrentGauge(internalGetMetadata(name, MetricType.CONCURRENT_GAUGE),
-                new MetricDescriptor(name, scopeTags()));
+                                       new MetricDescriptor(name, scopeTags()));
     }
 
     @Override
     public ConcurrentGauge concurrentGauge(String name, Tag... tags) {
         return internalConcurrentGauge(internalGetMetadata(name, MetricType.CONCURRENT_GAUGE),
-                new MetricDescriptor(name, scopeTags(tags)));
+                                       new MetricDescriptor(name, scopeTags(tags)));
     }
 
     @Override
     public ConcurrentGauge concurrentGauge(MetricID metricID) {
         String name = metricID.getName();
         return internalConcurrentGauge(internalGetMetadata(name, MetricType.CONCURRENT_GAUGE),
-                new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
+                                       new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
     public ConcurrentGauge concurrentGauge(Metadata metadata) {
         return internalConcurrentGauge(internalGetMetadata(metadata, MetricType.CONCURRENT_GAUGE),
-                new MetricDescriptor(metadata.getName(), scopeTags()));
+                                       new MetricDescriptor(metadata.getName(), scopeTags()));
     }
 
     @Override
     public ConcurrentGauge concurrentGauge(Metadata metadata, Tag... tags) {
         return internalConcurrentGauge(internalGetMetadata(metadata, MetricType.CONCURRENT_GAUGE),
-                new MetricDescriptor(metadata.getName(), scopeTags(tags)));
+                                       new MetricDescriptor(metadata.getName(), scopeTags(tags)));
     }
 
     ConcurrentGaugeImpl interceptorConcurrentGauge(Metadata metadata, String... tags) {
         return internalConcurrentGauge(internalGetMetadata(metadata, MetricType.CONCURRENT_GAUGE),
-                new MetricDescriptor(metadata.getName(), tags));
+                                       new MetricDescriptor(metadata.getName(), tags));
     }
 
     ConcurrentGaugeImpl injectedConcurrentGauge(org.eclipse.microprofile.metrics.annotation.Metric annotation) {
         return internalConcurrentGauge(
-                internalGetMetadata(annotation.name(), MetricType.CONCURRENT_GAUGE).merge(annotation),
-                new MetricDescriptor(annotation.name(), annotation.tags()));
+                                       internalGetMetadata(annotation.name(), MetricType.CONCURRENT_GAUGE).merge(annotation),
+                                       new MetricDescriptor(annotation.name(), annotation.tags()));
     }
 
     ConcurrentGaugeImpl internalConcurrentGauge(MpMetadata metadata, MetricDescriptor id) {
         ConcurrentGaugeImpl result = checkCast(ConcurrentGaugeImpl.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new ConcurrentGaugeImpl()));
+                                               constructedMeters.computeIfAbsent(id, k -> new ConcurrentGaugeImpl()));
         return result.register(metadata, id, registry);
     }
 
     public <T> Gauge<Double> gauge(String name, T o, ToDoubleFunction<T> f) {
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags()), o, f);
+                             new MetricDescriptor(name, scopeTags()), o, f);
     }
 
     public <T> Gauge<Double> gauge(String name, T o, ToDoubleFunction<T> f, Tag... tags) {
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags(tags)), o, f);
+                             new MetricDescriptor(name, scopeTags(tags)), o, f);
     }
 
     @Override
     public <T, R extends Number> Gauge<R> gauge(String name, T o, Function<T, R> f, Tag... tags) {
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags(tags)), o, f);
+                             new MetricDescriptor(name, scopeTags(tags)), o, f);
     }
 
     @Override
     public <T, R extends Number> Gauge<R> gauge(MetricID metricID, T o, Function<T, R> f) {
         String name = metricID.getName();
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags()), o, f);
+                             new MetricDescriptor(name, scopeTags()), o, f);
     }
 
     @Override
     public <T, R extends Number> Gauge<R> gauge(Metadata metadata, T o, Function<T, R> f, Tag... tags) {
         String name = metadata.getName();
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags(tags)), o, f);
+                             new MetricDescriptor(name, scopeTags(tags)), o, f);
     }
 
     @SuppressWarnings("unchecked")
     <T> GaugeAdapter<Double> internalGauge(MpMetadata metadata, MetricDescriptor id, T obj, ToDoubleFunction<T> f) {
         GaugeAdapter.DoubleFunctionGauge<T> result = checkCast(GaugeAdapter.DoubleFunctionGauge.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new GaugeAdapter.DoubleFunctionGauge<>(obj, f)));
+                                                               constructedMeters.computeIfAbsent(id, k -> new GaugeAdapter.DoubleFunctionGauge<>(obj, f)));
         return result.register(metadata, id, registry);
     }
 
     @SuppressWarnings("unchecked")
     <T, R extends Number> GaugeAdapter<R> internalGauge(MpMetadata metadata, MetricDescriptor id, T obj, Function<T, R> f) {
         GaugeAdapter.FunctionGauge<T, R> result = checkCast(GaugeAdapter.FunctionGauge.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new GaugeAdapter.FunctionGauge<>(obj, f)));
+                                                            constructedMeters.computeIfAbsent(id, k -> new GaugeAdapter.FunctionGauge<>(obj, f)));
         return result.register(metadata, id, registry);
     }
 
     public <T extends Number> Gauge<T> gauge(String name, Supplier<T> f) {
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags()), f);
+                             new MetricDescriptor(name, scopeTags()), f);
     }
 
+    @Override
     public <T extends Number> Gauge<T> gauge(String name, Supplier<T> f, Tag... tags) {
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags(tags)), f);
+                             new MetricDescriptor(name, scopeTags(tags)), f);
     }
 
     @Override
     public <T extends Number> Gauge<T> gauge(MetricID metricID, Supplier<T> f) {
         String name = metricID.getName();
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags()), f);
+                             new MetricDescriptor(name, scopeTags()), f);
     }
 
     @Override
     public <T extends Number> Gauge<T> gauge(Metadata metadata, Supplier<T> f, Tag... tags) {
         String name = metadata.getName();
         return internalGauge(internalGetMetadata(name, MetricType.GAUGE),
-                new MetricDescriptor(name, scopeTags(tags)), f);
+                             new MetricDescriptor(name, scopeTags(tags)), f);
     }
 
     @SuppressWarnings("unchecked")
     <T extends Number> GaugeAdapter<T> internalGauge(MpMetadata metadata, MetricDescriptor id, Supplier<T> f) {
         GaugeAdapter<T> result = checkCast(GaugeAdapter.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new GaugeAdapter.NumberSupplierGauge<>(f)));
+                                           constructedMeters.computeIfAbsent(id, k -> new GaugeAdapter.NumberSupplierGauge<>(f)));
         return result.register(metadata, id, registry);
     }
 
     void bindAnnotatedGauge(AnnotatedGaugeAdapter adapter) {
         MetricDescriptor id = new MetricDescriptor(adapter.name(), adapter.tags());
         AnnotatedGaugeAdapter oops = checkCast(AnnotatedGaugeAdapter.class, adapter.getMetadata(),
-                constructedMeters.putIfAbsent(id, adapter));
+                                               constructedMeters.putIfAbsent(id, adapter));
         if (oops == null) {
             metadataMap.put(adapter.name(), adapter.getMetadata());
             adapter.register(id, registry);
         } else {
-            throw new IllegalArgumentException(
-                    String.format("Gauge %s already exists. (existing='%s', new='%s')",
-                            adapter.getId(), oops.getTargetName(), adapter.getTargetName()));
+            throw new IllegalArgumentException(String.format("Gauge %s already exists. (existing='%s', new='%s')",
+                                                             adapter.getId(), oops.getTargetName(), adapter.getTargetName()));
         }
     }
 
     @Override
     public Histogram histogram(String name) {
         return internalHistogram(internalGetMetadata(name, MetricType.HISTOGRAM),
-                new MetricDescriptor(name, scopeTags()));
+                                 new MetricDescriptor(name, scopeTags()));
     }
 
     @Override
     public Histogram histogram(String name, Tag... tags) {
         return internalHistogram(internalGetMetadata(name, MetricType.HISTOGRAM),
-                new MetricDescriptor(name, scopeTags(tags)));
+                                 new MetricDescriptor(name, scopeTags(tags)));
     }
 
     @Override
     public Histogram histogram(MetricID metricID) {
         String name = metricID.getName();
         return internalHistogram(internalGetMetadata(name, MetricType.HISTOGRAM),
-                new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
+                                 new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
     public Histogram histogram(Metadata metadata) {
         return internalHistogram(internalGetMetadata(metadata, MetricType.HISTOGRAM),
-                new MetricDescriptor(metadata.getName(), scopeTags()));
+                                 new MetricDescriptor(metadata.getName(), scopeTags()));
     }
 
     @Override
     public Histogram histogram(Metadata metadata, Tag... tags) {
         return internalHistogram(internalGetMetadata(metadata, MetricType.HISTOGRAM),
-                new MetricDescriptor(metadata.getName(), scopeTags(tags)));
+                                 new MetricDescriptor(metadata.getName(), scopeTags(tags)));
     }
 
     HistogramAdapter injectedHistogram(org.eclipse.microprofile.metrics.annotation.Metric annotation) {
         return internalHistogram(
-                internalGetMetadata(annotation.name(), MetricType.HISTOGRAM).merge(annotation),
-                new MetricDescriptor(annotation.name(), annotation.tags()));
+                                 internalGetMetadata(annotation.name(), MetricType.HISTOGRAM).merge(annotation),
+                                 new MetricDescriptor(annotation.name(), annotation.tags()));
     }
 
     HistogramAdapter internalHistogram(MpMetadata metadata, MetricDescriptor id) {
         HistogramAdapter result = checkCast(HistogramAdapter.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new HistogramAdapter()));
+                                            constructedMeters.computeIfAbsent(id, k -> new HistogramAdapter()));
         return result.register(metadata, id, registry);
     }
 
     @Override
     public Meter meter(String name) {
         return internalMeter(internalGetMetadata(name, MetricType.METERED),
-                new MetricDescriptor(name, scopeTags()));
+                             new MetricDescriptor(name, scopeTags()));
     }
 
     @Override
     public Meter meter(String name, Tag... tags) {
         return internalMeter(internalGetMetadata(name, MetricType.METERED),
-                new MetricDescriptor(name, scopeTags(tags)));
+                             new MetricDescriptor(name, scopeTags(tags)));
     }
 
     @Override
     public Meter meter(MetricID metricID) {
         String name = metricID.getName();
         return internalMeter(internalGetMetadata(name, MetricType.METERED),
-                new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
+                             new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
     public Meter meter(Metadata metadata) {
         return internalMeter(internalGetMetadata(metadata, MetricType.METERED),
-                new MetricDescriptor(metadata.getName(), scopeTags()));
+                             new MetricDescriptor(metadata.getName(), scopeTags()));
     }
 
     @Override
     public Meter meter(Metadata metadata, Tag... tags) {
         return internalMeter(internalGetMetadata(metadata, MetricType.METERED),
-                new MetricDescriptor(metadata.getName(), scopeTags(tags)));
+                             new MetricDescriptor(metadata.getName(), scopeTags(tags)));
     }
 
     MeterAdapter injectedMeter(org.eclipse.microprofile.metrics.annotation.Metric annotation) {
         return internalMeter(
-                internalGetMetadata(annotation.name(), MetricType.METERED).merge(annotation),
-                new MetricDescriptor(annotation.name(), annotation.tags()));
+                             internalGetMetadata(annotation.name(), MetricType.METERED).merge(annotation),
+                             new MetricDescriptor(annotation.name(), annotation.tags()));
     }
 
     MeterAdapter internalMeter(MpMetadata metadata, MetricDescriptor id) {
         // MP Meter --> Micrometer Counter
         MeterAdapter result = checkCast(MeterAdapter.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new MeterAdapter()));
+                                        constructedMeters.computeIfAbsent(id, k -> new MeterAdapter()));
         return result.register(metadata, id, registry);
     }
 
     @Override
     public Timer timer(String name) {
         return internalTimer(internalGetMetadata(name, MetricType.TIMER),
-                new MetricDescriptor(name, scopeTags()));
+                             new MetricDescriptor(name, scopeTags()));
     }
 
     @Override
     public Timer timer(String name, Tag... tags) {
         return internalTimer(internalGetMetadata(name, MetricType.TIMER),
-                new MetricDescriptor(name, scopeTags(tags)));
+                             new MetricDescriptor(name, scopeTags(tags)));
     }
 
     @Override
     public Timer timer(MetricID metricID) {
         String name = metricID.getName();
         return internalTimer(internalGetMetadata(name, MetricType.TIMER),
-                new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
+                             new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
     public Timer timer(Metadata metadata) {
         return internalTimer(internalGetMetadata(metadata, MetricType.TIMER),
-                new MetricDescriptor(metadata.getName(), scopeTags()));
+                             new MetricDescriptor(metadata.getName(), scopeTags()));
     }
 
     @Override
     public Timer timer(Metadata metadata, Tag... tags) {
         return internalTimer(internalGetMetadata(metadata, MetricType.TIMER),
-                new MetricDescriptor(metadata.getName(), scopeTags(tags)));
+                             new MetricDescriptor(metadata.getName(), scopeTags(tags)));
     }
 
     TimerAdapter injectedTimer(org.eclipse.microprofile.metrics.annotation.Metric annotation) {
         return internalTimer(
-                internalGetMetadata(annotation.name(), MetricType.TIMER).merge(annotation),
-                new MetricDescriptor(annotation.name(), annotation.tags()));
+                             internalGetMetadata(annotation.name(), MetricType.TIMER).merge(annotation),
+                             new MetricDescriptor(annotation.name(), annotation.tags()));
     }
 
     TimerAdapter interceptorTimer(Metadata metadata, String... tags) {
         return internalTimer(internalGetMetadata(metadata, MetricType.TIMER),
-                new MetricDescriptor(metadata.getName(), tags));
+                             new MetricDescriptor(metadata.getName(), tags));
     }
 
     TimerAdapter internalTimer(MpMetadata metadata, MetricDescriptor id) {
         TimerAdapter result = checkCast(TimerAdapter.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new TimerAdapter(registry)));
+                                        constructedMeters.computeIfAbsent(id, k -> new TimerAdapter(registry)));
         return result.register(metadata, id);
     }
 
     @Override
     public SimpleTimer simpleTimer(String name) {
         return internalSimpleTimer(internalGetMetadata(name, MetricType.SIMPLE_TIMER),
-                new MetricDescriptor(name, scopeTags()));
+                                   new MetricDescriptor(name, scopeTags()));
     }
 
     @Override
     public SimpleTimer simpleTimer(String name, Tag... tags) {
         return internalSimpleTimer(internalGetMetadata(name, MetricType.SIMPLE_TIMER),
-                new MetricDescriptor(name, scopeTags(tags)));
+                                   new MetricDescriptor(name, scopeTags(tags)));
     }
 
     @Override
     public SimpleTimer simpleTimer(MetricID metricID) {
         String name = metricID.getName();
         return internalSimpleTimer(internalGetMetadata(name, MetricType.SIMPLE_TIMER),
-                new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
+                                   new MetricDescriptor(name, scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
     public SimpleTimer simpleTimer(Metadata metadata) {
         return internalSimpleTimer(internalGetMetadata(metadata, MetricType.SIMPLE_TIMER),
-                new MetricDescriptor(metadata.getName(), scopeTags()));
+                                   new MetricDescriptor(metadata.getName(), scopeTags()));
     }
 
     @Override
     public SimpleTimer simpleTimer(Metadata metadata, Tag... tags) {
         return internalSimpleTimer(internalGetMetadata(metadata, MetricType.SIMPLE_TIMER),
-                new MetricDescriptor(metadata.getName(), scopeTags(tags)));
+                                   new MetricDescriptor(metadata.getName(), scopeTags(tags)));
     }
 
     @Override
@@ -415,8 +416,7 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
 
     @Override
     public <T extends Metric> T getMetric(MetricID metricID, Class<T> asType) {
-        return asType
-                .cast(constructedMeters.get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray()))));
+        return asType.cast(constructedMeters.get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray()))));
     }
 
     @Override
@@ -426,8 +426,7 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
 
     @Override
     public ConcurrentGauge getConcurrentGauge(MetricID metricID) {
-        return (ConcurrentGauge) constructedMeters
-                .get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray())));
+        return (ConcurrentGauge) constructedMeters.get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
@@ -437,8 +436,7 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
 
     @Override
     public Histogram getHistogram(MetricID metricID) {
-        return (Histogram) constructedMeters
-                .get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray())));
+        return (Histogram) constructedMeters.get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
@@ -453,8 +451,7 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
 
     @Override
     public SimpleTimer getSimpleTimer(MetricID metricID) {
-        return (SimpleTimer) constructedMeters
-                .get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray())));
+        return (SimpleTimer) constructedMeters.get(new MetricDescriptor(metricID.getName(), scopeTags(metricID.getTagsAsArray())));
     }
 
     @Override
@@ -464,14 +461,14 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
 
     TimerAdapter injectedSimpleTimer(org.eclipse.microprofile.metrics.annotation.Metric annotation) {
         return internalSimpleTimer(
-                internalGetMetadata(annotation.name(), MetricType.SIMPLE_TIMER).merge(annotation),
-                new MetricDescriptor(annotation.name(), annotation.tags()));
+                                   internalGetMetadata(annotation.name(), MetricType.SIMPLE_TIMER).merge(annotation),
+                                   new MetricDescriptor(annotation.name(), annotation.tags()));
     }
 
     TimerAdapter internalSimpleTimer(MpMetadata metadata, MetricDescriptor id) {
         // SimpleTimer --> Micrometer Timer
         TimerAdapter result = checkCast(TimerAdapter.class, metadata,
-                constructedMeters.computeIfAbsent(id, k -> new TimerAdapter(registry)));
+                                        constructedMeters.computeIfAbsent(id, k -> new TimerAdapter(registry)));
         return result.register(metadata, id);
     }
 
@@ -668,9 +665,8 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
     private MpMetadata internalGetMetadata(String name, MetricType type) {
         MpMetadata result = metadataMap.computeIfAbsent(name, k -> new MpMetadata(name, type));
         if (result.type != type) {
-            throw new IllegalStateException(
-                    String.format("Metric %s already defined using a different type (%s)",
-                            name, result.getType()));
+            throw new IllegalStateException(String.format("Metric %s already defined using a different type (%s)",
+                                                          name, result.getType()));
         }
         return result;
     }
@@ -678,9 +674,8 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
     private MpMetadata internalGetMetadata(Metadata metadata, MetricType type) {
         MpMetadata result = metadataMap.computeIfAbsent(metadata.getName(), k -> MpMetadata.sanitize(metadata, type));
         if (!result.mergeSameType(metadata)) {
-            throw new IllegalArgumentException(
-                    String.format("Metric %s already defined using a different type (%s)",
-                            metadata.getName(), result.getType()));
+            throw new IllegalArgumentException(String.format("Metric %s already defined using a different type (%s)",
+                                                             metadata.getName(), result.getType()));
         }
         return result;
     }
@@ -689,10 +684,8 @@ public class MpMetricRegistryAdapter implements MetricRegistry {
         try {
             return type.cast(o);
         } catch (ClassCastException cce) {
-            throw new IllegalStateException(
-                    String.format("Metric %s already defined using a different type (%s)",
-                            metadata.name, o.getType().name()),
-                    cce);
+            throw new IllegalStateException(String.format("Metric %s already defined using a different type (%s)",
+                                                          metadata.name, o.getType().name()), cce);
         }
     }
 }

@@ -29,8 +29,6 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.annotation.Metric;
 
-import io.smallrye.metrics.SmallRyeMetricsMessages;
-
 @Vetoed
 /* package-private */ class SeMetricName implements MetricName {
 
@@ -48,7 +46,9 @@ import io.smallrye.metrics.SmallRyeMetricsMessages;
         } else if (annotated instanceof AnnotatedParameter) {
             return of((AnnotatedParameter<?>) annotated);
         } else {
-            throw SmallRyeMetricsMessages.msg.unableToRetrieveMetricNameForInjectionPoint(ip);
+            throw new IllegalArgumentException("Unable to retrieve metric name for injection point" + ip);
+            //temp
+            //throw SmallRyeMetricsMessages.msg.unableToRetrieveMetricNameForInjectionPoint(ip);
         }
     }
 
@@ -57,11 +57,10 @@ import io.smallrye.metrics.SmallRyeMetricsMessages;
         if (member.isAnnotationPresent(Metric.class)) {
             Metric metric = member.getAnnotation(Metric.class);
             String name = (metric.name().isEmpty()) ? member.getJavaMember().getName() : of(metric.name());
-            return metric.absolute() | parameters.contains(MetricsParameter.useAbsoluteName) ? name
-                    : MetricRegistry.name(member.getJavaMember().getDeclaringClass(), name);
+            return metric.absolute() | parameters.contains(MetricsParameter.useAbsoluteName) ? name : MetricRegistry.name(member.getJavaMember().getDeclaringClass(), name);
         } else {
-            return parameters.contains(MetricsParameter.useAbsoluteName) ? member.getJavaMember().getName()
-                    : MetricRegistry.name(member.getJavaMember().getDeclaringClass(), member.getJavaMember().getName());
+            return parameters.contains(MetricsParameter.useAbsoluteName) ? member.getJavaMember().getName() : MetricRegistry.name(member.getJavaMember().getDeclaringClass(),
+                                                                                                                                  member.getJavaMember().getName());
         }
     }
 
@@ -74,12 +73,11 @@ import io.smallrye.metrics.SmallRyeMetricsMessages;
         if (parameter.isAnnotationPresent(Metric.class)) {
             Metric metric = parameter.getAnnotation(Metric.class);
             String name = (metric.name().isEmpty()) ? getParameterName(parameter) : of(metric.name());
-            return metric.absolute() | parameters.contains(MetricsParameter.useAbsoluteName) ? name
-                    : MetricRegistry.name(parameter.getDeclaringCallable().getJavaMember().getDeclaringClass(), name);
+            return metric.absolute()
+                   | parameters.contains(MetricsParameter.useAbsoluteName) ? name : MetricRegistry.name(parameter.getDeclaringCallable().getJavaMember().getDeclaringClass(), name);
         } else {
-            return parameters.contains(MetricsParameter.useAbsoluteName) ? getParameterName(parameter)
-                    : MetricRegistry.name(parameter.getDeclaringCallable().getJavaMember().getDeclaringClass(),
-                            getParameterName(parameter));
+            return parameters.contains(MetricsParameter.useAbsoluteName) ? getParameterName(parameter) : MetricRegistry.name(parameter.getDeclaringCallable().getJavaMember().getDeclaringClass(),
+                                                                                                                             getParameterName(parameter));
         }
     }
 
@@ -97,10 +95,14 @@ import io.smallrye.metrics.SmallRyeMetricsMessages;
             if ((Boolean) Parameter.getMethod("isNamePresent").invoke(param)) {
                 return (String) Parameter.getMethod("getName").invoke(param);
             } else {
-                throw SmallRyeMetricsMessages.msg.unableToRetrieveParameterName(parameter);
+                throw new IllegalArgumentException("Unable to retrieve name for parameter " + parameter);
+                //temp
+                //throw SmallRyeMetricsMessages.msg.unableToRetrieveParameterName(parameter);
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException cause) {
-            throw SmallRyeMetricsMessages.msg.unableToRetrieveParameterName(parameter);
+            throw new IllegalArgumentException("Unable to retrieve name for parameter " + parameter);
+            //temp
+            //throw SmallRyeMetricsMessages.msg.unableToRetrieveParameterName(parameter);
         }
     }
 }

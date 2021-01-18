@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -29,18 +30,33 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
 
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+
 import com.ibm.ws.cdi.extension.WebSphereCDIExtension;
 
 import io.smallrye.metrics.MetricProducer;
 import io.smallrye.metrics.MetricRegistries;
 import io.smallrye.metrics.MetricsRequestHandler;
-import io.smallrye.metrics.SmallRyeMetricsLogging;
 import io.smallrye.metrics.interceptors.MetricNameFactory;
 
+@Component(service = WebSphereCDIExtension.class, immediate = true)
 public class MetricCdiInjectionExtension implements Extension, WebSphereCDIExtension {
 
+    @Activate
+    public void activate(ComponentContext context, Map<String, Object> properties) {
+        System.out.println("activating");
+    }
+
     void logVersion(@Observes BeforeBeanDiscovery bbd) {
-        SmallRyeMetricsLogging.log.logSmallRyeMetricsVersion(getImplementationVersion().orElse("unknown"));
+        if (getImplementationVersion().isPresent()) {
+            System.out.println(getImplementationVersion().get());
+        } else {
+            System.out.println("unkown");
+        }
+        //temp
+        //SmallRyeMetricsLogging.log.logSmallRyeMetricsVersion(getImplementationVersion().orElse("unknown"));
     }
 
     void registerAnnotatedTypes(@Observes BeforeBeanDiscovery bbd, BeanManager manager) {
@@ -67,7 +83,9 @@ public class MetricCdiInjectionExtension implements Extension, WebSphereCDIExten
                         return Optional.ofNullable(properties.getProperty("smallrye.metrics.version"));
                     }
                 } catch (IOException e) {
-                    SmallRyeMetricsLogging.log.unableToDetectVersion();
+                    System.out.println("Unable to detect version of SmallRye Metrics");
+                    //temp
+                    //SmallRyeMetricsLogging.log.unableToDetectVersion();
                 }
                 return Optional.empty();
             }
