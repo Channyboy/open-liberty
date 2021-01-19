@@ -17,6 +17,7 @@ Subsystem-Name: MicroProfile Metrics 4.0
 -bundles=com.ibm.ws.microprofile.metrics.common, \
  io.openliberty.smallrye.metrics, \
  io.openliberty.io.smallrye.common, \
+ com.ibm.ws.cdi.interface, \
  com.ibm.ws.org.jboss.logging, \
  io.openliberty.microprofile.metrics.internal.4.0, \
  io.openliberty.microprofile.metrics.internal.private.4.0, \

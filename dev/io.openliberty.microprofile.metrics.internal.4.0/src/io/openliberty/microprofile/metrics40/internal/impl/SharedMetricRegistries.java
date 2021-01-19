@@ -17,7 +17,8 @@ import org.osgi.service.component.annotations.Component;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.smallrye.metrics.MetricRegistries;
 import io.smallrye.metrics.mpmetrics.MpMetricRegistryAdapter;
 
@@ -27,16 +28,7 @@ import io.smallrye.metrics.mpmetrics.MpMetricRegistryAdapter;
 @Component(service = SharedMetricRegistries.class, immediate = true)
 public class SharedMetricRegistries {
 
-//    private static PrometheusMeterRegistry pmr = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-
-    static {
-        CompositeMeterRegistry cid = Metrics.globalRegistry;
-        System.out.println(cid.toString());
-        System.out.println(io.micrometer.core.instrument.Gauge.class);
-        System.out.println(MeterRegistry.class);
-        System.out.println(io.prometheus.client.Counter.class);
-        //System.out.println(io.micrometer.prometheus.PrometheusMeterRegistry.class);
-    }
+    private static PrometheusMeterRegistry prometheusMeterRegistry = null;
 
     public static void clear() {
         MetricRegistries.dropAll();
@@ -81,10 +73,20 @@ public class SharedMetricRegistries {
     }
 
     public MetricRegistry getOrCreate(String name) {
-        //if (pmr == null) {
-        //pmr = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-        //Metrics.addRegistry(pmr);
-        //}
+        //System.out.println("SMR : " + Metrics.globalRegistry.toString());
+        //Need to create the PrometheusMetricRegistry.
+        if (prometheusMeterRegistry == null) {
+            prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+            Metrics.addRegistry(prometheusMeterRegistry);
+
+            for (MeterRegistry mr : Metrics.globalRegistry.getRegistries()) {
+                System.out.println("found " + mr);
+            }
+
+        }
+
+        //Calls The SmallRye `MetricRegistires` (i.e equivalent to this class)
+
         Type type = typeOf(name);
         final MetricRegistry existingMetricRegistry = MetricRegistries.get(type);
 

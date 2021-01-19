@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
@@ -33,6 +34,7 @@ import javax.enterprise.inject.spi.Extension;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 
 import com.ibm.ws.cdi.extension.WebSphereCDIExtension;
 
@@ -41,19 +43,20 @@ import io.smallrye.metrics.MetricRegistries;
 import io.smallrye.metrics.MetricsRequestHandler;
 import io.smallrye.metrics.interceptors.MetricNameFactory;
 
-@Component(service = WebSphereCDIExtension.class, immediate = true)
+@Component(service = WebSphereCDIExtension.class, configurationPolicy = ConfigurationPolicy.IGNORE, immediate = true)
 public class MetricCdiInjectionExtension implements Extension, WebSphereCDIExtension {
 
     @Activate
     public void activate(ComponentContext context, Map<String, Object> properties) {
-        System.out.println("activating");
+        System.out.println("MetricCdiInjectionExtension: Activating2");
     }
 
     void logVersion(@Observes BeforeBeanDiscovery bbd) {
+        System.out.println("test");
         if (getImplementationVersion().isPresent()) {
-            System.out.println(getImplementationVersion().get());
+            System.out.println("MetricCdiInjectionExtension: implvers -" + getImplementationVersion().get());
         } else {
-            System.out.println("unkown");
+            System.out.println("MetricCdiInjectionExtension: implvers - Unkown");
         }
         //temp
         //SmallRyeMetricsLogging.log.logSmallRyeMetricsVersion(getImplementationVersion().orElse("unknown"));
@@ -61,6 +64,7 @@ public class MetricCdiInjectionExtension implements Extension, WebSphereCDIExten
 
     void registerAnnotatedTypes(@Observes BeforeBeanDiscovery bbd, BeanManager manager) {
         String extensionName = MetricCdiInjectionExtension.class.getName();
+        System.out.println("something2");
         for (Class clazz : new Class[] {
                                          MetricProducer.class,
                                          MetricNameFactory.class,
@@ -69,6 +73,10 @@ public class MetricCdiInjectionExtension implements Extension, WebSphereCDIExten
         }) {
             bbd.addAnnotatedType(manager.createAnnotatedType(clazz), extensionName + "_" + clazz.getName());
         }
+    }
+
+    protected void defaultMetricRegistry(@Observes AfterBeanDiscovery abd, BeanManager manager) {
+        System.out.println("Test afterbeandiscovery");
     }
 
     private Optional<String> getImplementationVersion() {
@@ -83,7 +91,7 @@ public class MetricCdiInjectionExtension implements Extension, WebSphereCDIExten
                         return Optional.ofNullable(properties.getProperty("smallrye.metrics.version"));
                     }
                 } catch (IOException e) {
-                    System.out.println("Unable to detect version of SmallRye Metrics");
+                    System.out.println("MetricCdiInjectionExtension: Unable to detect version of SmallRye Metrics");
                     //temp
                     //SmallRyeMetricsLogging.log.unableToDetectVersion();
                 }

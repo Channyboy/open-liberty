@@ -31,6 +31,9 @@ public class OpenMetricsExporter implements Exporter {
     private final PrometheusMeterRegistry registry;
 
     public OpenMetricsExporter() {
+
+        System.out.println("OME: " + Metrics.globalRegistry.toString());
+
         // FIXME: this only allows one prometheus registry; should we potentially allow more?
         Optional<MeterRegistry> prometheusRegistry = Metrics.globalRegistry.getRegistries().stream().filter(registry -> registry instanceof PrometheusMeterRegistry).findFirst();
 
