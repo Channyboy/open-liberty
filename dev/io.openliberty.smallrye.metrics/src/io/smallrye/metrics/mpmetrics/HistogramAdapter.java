@@ -14,10 +14,10 @@ class HistogramAdapter implements Histogram, MeterHolder {
     HistogramAdapter register(MpMetadata metadata, MetricDescriptor metricInfo, MeterRegistry registry) {
         if (summary == null || metadata.cleanDirtyMetadata()) {
             summary = DistributionSummary.builder(metricInfo.name())
-                    .description(metadata.getDescription())
-                    .baseUnit(metadata.getUnit())
-                    .tags(metricInfo.tags())
-                    .register(registry);
+                            .description(metadata.getDescription())
+                            .baseUnit(metadata.getUnit())
+                            .tags(metricInfo.tags())
+                            .register(registry);
         }
 
         return this;
@@ -52,5 +52,10 @@ class HistogramAdapter implements Histogram, MeterHolder {
     @Override
     public MetricType getType() {
         return MetricType.HISTOGRAM;
+    }
+
+    @Override
+    public long getSum() {
+        return (long) summary.totalAmount();
     }
 }
