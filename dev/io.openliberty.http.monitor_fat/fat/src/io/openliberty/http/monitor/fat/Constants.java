@@ -47,5 +47,9 @@ public class Constants {
     public static final String PARAM_RESOURCE_URL = REST_APP_URL + "/params";
 
     //JSP
+    static final String JSP_APP = "jspApp";
     static final String JSP_CONTEXT_ROOT = "/jspApp";
+
+    //
+    static final String UNKOWN_SERVICE = "unknown_service:java";
 }
