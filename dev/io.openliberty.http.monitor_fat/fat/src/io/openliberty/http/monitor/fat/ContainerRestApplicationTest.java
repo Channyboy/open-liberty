@@ -11,12 +11,17 @@ package io.openliberty.http.monitor.fat;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.TimeUnit;
+
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.GenericContainer;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
 import com.ibm.websphere.simplicity.ShrinkHelper.DeployOptions;
@@ -24,6 +29,7 @@ import com.ibm.websphere.simplicity.log.Log;
 
 import componenttest.annotation.AllowedFFDC;
 import componenttest.annotation.Server;
+import componenttest.containers.SimpleLogConsumer;
 import componenttest.custom.junit.runner.FATRunner;
 import componenttest.topology.impl.LibertyServer;
 import jakarta.ws.rs.HttpMethod;
@@ -35,15 +41,24 @@ import jakarta.ws.rs.HttpMethod;
  * Tests path parameters and query parameters.
  */
 @RunWith(FATRunner.class)
-public class RestApplicationTest extends BaseTestClass {
+public class ContainerRestApplicationTest extends BaseTestClass {
 
-    private static Class<?> c = RestApplicationTest.class;
+    private static Class<?> c = ContainerRestApplicationTest.class;
 
-    @Server("SimpleRestServer")
+    @Server("ContainerRestServer")
     public static LibertyServer server;
+
+    @ClassRule //FileSystemBind, path is relative to AutoFVT folder.
+    public static GenericContainer<?> container = new GenericContainer<>("otel/opentelemetry-collector-contrib")
+                    .withLogConsumer(new SimpleLogConsumer(ContainerServletApplicationTest.class, "DooDoo"))
+                    .withFileSystemBind("publish/servers/ContainerServletServer/config.yaml", "/etc/otelcol-contrib/config.yaml", BindMode.READ_WRITE)
+                    .withExposedPorts(8888, 8889, 4317);
 
     @BeforeClass
     public static void beforeClass() throws Exception {
+        //Execute a command within container after it has started
+        container.execInContainer("echo \"This is executed after container has started\"");
+
         trustAll();
         WebArchive testWAR = ShrinkWrap
                         .create(WebArchive.class, "RestApp.war")
@@ -53,11 +68,16 @@ public class RestApplicationTest extends BaseTestClass {
         ShrinkHelper.exportDropinAppToServer(server, testWAR,
                                              DeployOptions.SERVER_ONLY);
 
+        server.addEnvVar("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://" + container.getHost() + ":" + container.getMappedPort(4317));
+
+        Log.info(c, "the thingy", "http://" + container.getHost() + ":" + container.getMappedPort(4317));
+
         server.startServer();
 
         //Read to run a smarter planet
         server.waitForStringInLogUsingMark("CWWKF0011I");
         server.setMarkToEndOfLog();
+
     }
 
     @AfterClass
@@ -69,7 +89,7 @@ public class RestApplicationTest extends BaseTestClass {
     }
 
     @Test
-    public void r1_normalPathGet() throws Exception {
+    public void cr1_normalPathGet() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -78,13 +98,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_normalPathPost() throws Exception {
+    public void cr1_normalPathPost() throws Exception {
         assertTrue(server.isStarted());
 
         String route = Constants.SIMPLE_RESOURCE_URL + "/pathPost";
@@ -92,13 +112,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_normalPathPut() throws Exception {
+    public void cr1_normalPathPut() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -107,13 +127,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_normalPathDelete() throws Exception {
+    public void cr1_normalPathDelete() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -122,13 +142,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_normalPathOptions() throws Exception {
+    public void cr1_normalPathOptions() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -137,13 +157,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_normalPathHead() throws Exception {
+    public void cr1_normalPathHead() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -152,13 +172,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod));
     }
 
     @Test
     @AllowedFFDC
-    public void r1_failDivZero() throws Exception {
+    public void cr1_failDivZero() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -168,13 +188,13 @@ public class RestApplicationTest extends BaseTestClass {
         String errorType = responseStatus;
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod, errorType));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod, errorType));
 
     }
 
     @Test
-    public void r1_nonExistentPath() throws Exception {
+    public void cr1_nonExistentPath() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -184,14 +204,14 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "404";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), resolvedRoute, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), resolvedRoute, responseStatus, requestMethod));
 
     }
 
     @Test
     @AllowedFFDC
-    public void r1_failThrowIO() throws Exception {
+    public void cr1_failThrowIO() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -201,14 +221,14 @@ public class RestApplicationTest extends BaseTestClass {
         String errorType = responseStatus;
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod, errorType));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod, errorType));
 
     }
 
     @Test
     @AllowedFFDC
-    public void r1_failThrowIAE() throws Exception {
+    public void cr1_failThrowIAE() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -218,13 +238,13 @@ public class RestApplicationTest extends BaseTestClass {
         String errorType = responseStatus;
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), route, responseStatus, requestMethod, errorType));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), route, responseStatus, requestMethod, errorType));
 
     }
 
     @Test
-    public void r1_params_any() throws Exception {
+    public void cr1_params_any() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -235,13 +255,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), expectedRoute, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_params_getName() throws Exception {
+    public void cr1_params_getName() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -252,13 +272,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), expectedRoute, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_params_postName() throws Exception {
+    public void cr1_params_postName() throws Exception {
 
         assertTrue(server.isStarted());
 
@@ -269,13 +289,13 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), expectedRoute, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_params_query() throws Exception {
+    public void cr1_params_query() throws Exception {
 
         /*
          * Query params aren't part of the rout.
@@ -291,14 +311,14 @@ public class RestApplicationTest extends BaseTestClass {
 
         String res = requestHttpServlet(route, server, requestMethod);
 
-        Log.info(c, " r1_params_query", "the response is " + res);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+        Log.info(c, " cr1_params_query", "the response is " + res);
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), expectedRoute, responseStatus, requestMethod));
 
     }
 
     @Test
-    public void r1_params_queryParam() throws Exception {
+    public void cr1_params_queryParam() throws Exception {
 
         /*
          * Query params aren't part of the rout.
@@ -313,8 +333,8 @@ public class RestApplicationTest extends BaseTestClass {
         String responseStatus = "200";
 
         String res = requestHttpServlet(route, server, requestMethod);
-
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+        TimeUnit.SECONDS.sleep(4);
+        assertTrue(validateMpTelemetryHttp(Constants.REST_APP, getContainerCollectorMetrics(container), expectedRoute, responseStatus, requestMethod));
 
     }
 
