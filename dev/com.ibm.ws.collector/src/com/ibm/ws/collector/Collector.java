@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
@@ -353,4 +353,12 @@ public abstract class Collector implements Handler, Formatter {
     }
 
     public abstract Target getTarget();
+
+    protected void quiesceThings() {
+        System.out.println(" Quesing things");
+        for (Task t : taskMap.values()) {
+            System.out.println("killing " + t);
+            t.stop();
+        }
+    }
 }

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
@@ -19,6 +19,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
@@ -44,6 +45,7 @@ import com.ibm.ws.lumberjack.LumberjackEvent.Entry;
 import com.ibm.wsspi.collector.manager.Handler;
 import com.ibm.wsspi.kernel.service.location.VariableRegistry;
 import com.ibm.wsspi.kernel.service.utils.AtomicServiceReference;
+import com.ibm.wsspi.kernel.service.utils.ServerQuiesceListener;
 import com.ibm.wsspi.ssl.SSLSupport;
 
 /**
@@ -51,8 +53,9 @@ import com.ibm.wsspi.ssl.SSLSupport;
  * to a Logstash instance using Lumberjack protocol
  */
 
-@Component(name = LogstashCollector.COMPONENT_NAME, service = { Handler.class }, configurationPolicy = ConfigurationPolicy.REQUIRE, property = { "service.vendor=IBM" })
-public class LogstashCollector extends Collector {
+@Component(name = LogstashCollector.COMPONENT_NAME, service = { Handler.class, ServerQuiesceListener.class }, configurationPolicy = ConfigurationPolicy.REQUIRE,
+           property = { "service.vendor=IBM" })
+public class LogstashCollector extends Collector implements ServerQuiesceListener {
 
     private static final TraceComponent tc = Tr.register(LogstashCollector.class, "logstashCollector",
                                                          "com.ibm.ws.logstash.collector.internal.resources.LoggingMessages");
@@ -135,6 +138,8 @@ public class LogstashCollector extends Collector {
         variableRegistryServiceRef.unsetReference(variableRegistry);
     }
 
+    private Future<?> myFuture = null;
+
     @Override
     @Activate
     protected void activate(ComponentContext cc, Map<String, Object> configuration) {
@@ -151,13 +156,14 @@ public class LogstashCollector extends Collector {
         if (taskMgr != null) {
             taskMgr.updateConfig();
             //Start the task manager
-            executorServiceRef.getService().submit(taskMgr);
+            myFuture = executorServiceRef.getService().submit(taskMgr);
         }
     }
 
     @Override
     @Deactivate
     protected void deactivate(ComponentContext cc, int reason) {
+        System.out.println("Deactivating logstash Collector");
         taskMgr.close();
         super.deactivate(cc, reason);
         sslSupportServiceRef.deactivate(cc);
@@ -282,6 +288,17 @@ public class LogstashCollector extends Collector {
             };
         }
         return taskMgr;
+    }
+
+    @Override
+    public void serverStopping() {
+        System.out.println("booooooom");
+        taskMgr.close();
+        System.out.println("shutting it down " + myFuture.cancel(true));
+        myFuture = null;
+        System.out.println("dooo");
+        quiesceThings();
+
     }
 
 }

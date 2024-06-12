@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
@@ -102,7 +102,7 @@ public class TaskImpl extends Task implements Runnable {
             if (TraceComponent.isAnyTracingEnabled() && tc.isEventEnabled()) {
                 Tr.event(tc, "Stopping task", this, this.config.getSourceName());
             }
-            future.cancel(true);
+            System.out.println(" blaaaaaaaaaa" + future.cancel(true));
             future = null;
         }
     }
@@ -158,7 +158,7 @@ public class TaskImpl extends Task implements Runnable {
         /**
          * Initialize the maximum number of events going through at windowDuration ms
          *
-         * @param maxEvents maximum number of events specified
+         * @param maxEvents      maximum number of events specified
          * @param windowDuration the window time frame in milliseconds for the number of maxEvents specified
          */
         public Throttler(int maxEvents, long windowDuration) {
