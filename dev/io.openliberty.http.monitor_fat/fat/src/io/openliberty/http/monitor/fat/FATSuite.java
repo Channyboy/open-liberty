@@ -18,7 +18,9 @@ import org.junit.runners.Suite.SuiteClasses;
                 NoAppTest.class,
                 JSPApplicationTest.class,
                 RestApplicationTest.class,
-                ServletApplicationTest.class
+                ServletApplicationTest.class,
+                ContainerServletApplicationTest.class,
+                ContainerRestApplicationTest.class
 })
 
 public class FATSuite {
