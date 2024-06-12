@@ -1,0 +1,4 @@
+-Dcom.ibm.ws.beta.edition=true
+-Dotel.metrics.exporter=otlp
+-Dotel.sdk.disabled=false
+-Dotel.metric.export.interval=500

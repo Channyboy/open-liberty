@@ -25,7 +25,6 @@ import org.testcontainers.containers.GenericContainer;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
 import com.ibm.websphere.simplicity.ShrinkHelper.DeployOptions;
-import com.ibm.websphere.simplicity.log.Log;
 
 import componenttest.annotation.AllowedFFDC;
 import componenttest.annotation.Server;
@@ -47,15 +46,12 @@ public class ContainerServletApplicationTest extends BaseTestClass {
 
     @ClassRule //FileSystemBind, path is relative to AutoFVT folder.
     public static GenericContainer<?> container = new GenericContainer<>("otel/opentelemetry-collector-contrib")
-                    .withLogConsumer(new SimpleLogConsumer(ContainerServletApplicationTest.class, "DooDoo"))
-                    .withFileSystemBind("publish/servers/ContainerServletServer/config.yaml", "/etc/otelcol-contrib/config.yaml", BindMode.READ_WRITE)
+                    .withLogConsumer(new SimpleLogConsumer(ContainerServletApplicationTest.class, "opentelemetry-collector-contrib"))
+                    .withFileSystemBind("config.yaml", "/etc/otelcol-contrib/config.yaml", BindMode.READ_WRITE)
                     .withExposedPorts(8888, 8889, 4317);
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        //Execute a command within container after it has started
-        container.execInContainer("echo \"This is executed after container has started\"");
-
         trustAll();
         WebArchive simpleSerletWAR = ShrinkWrap
                         .create(WebArchive.class, "ServletApp.war")
@@ -74,8 +70,6 @@ public class ContainerServletApplicationTest extends BaseTestClass {
 
         server.addEnvVar("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://" + container.getHost() + ":" + container.getMappedPort(4317));
 
-        Log.info(c, "the thingy", "http://" + container.getHost() + ":" + container.getMappedPort(4317));
-
         server.startServer();
 
         //Read to run a smarter planet
@@ -83,27 +77,6 @@ public class ContainerServletApplicationTest extends BaseTestClass {
         server.setMarkToEndOfLog();
 
     }
-
-//    @Test
-//    public void doNothing() throws Exception {
-//        assertTrue(server.isStarted());
-//
-//        String route = Constants.SIMPLE_SERVLET_URL;
-//        String requestMethod = HttpMethod.GET;
-//        String responseStatus = "200";
-//
-//        String res = requestHttpServlet(route, server, requestMethod);
-//
-//        String hi = requesContainerHttpServlet("/metrics", container.getHost(), container.getMappedPort(8889), "GET", null);
-//
-//        Log.info(c, "container output?", hi);
-//
-////        hi = requesContainerHttpServlet("/metrics", container.getHost(), container.getMappedPort(8888), "GET", null);
-////
-////        Log.info(c, "other container output?", hi);
-//
-//        //assertTrue(validatePrometheusHTTPMetric(getVendorMetrics(server), route, responseStatus, requestMethod));
-//    }
 
     @Test
     public void cs1_simplePathGet() throws Exception {
