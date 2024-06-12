@@ -43,7 +43,7 @@ public class MPMetricsHTTPMetricsAdapterImpl implements HTTPMetricAdapter {
     }
 
     @Override
-    public void updateHttpMetrics(HttpStatAttributes httpStatAttributes, Duration duration) {
+    public void updateHttpMetrics(HttpStatAttributes httpStatAttributes, Duration duration, String appName) {
 
         if (sharedMetricRegistries == null) {
             return;
