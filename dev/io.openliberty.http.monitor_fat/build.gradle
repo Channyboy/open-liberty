@@ -15,3 +15,10 @@
  // This bundle is required both at compiletime and runtime.
  addRequiredLibraries.dependsOn copyTestContainers
 
+assemble.doLast {
+    // update the generated-src dir with the new stubs that have been generated
+    copy {
+        from "fat/resource/config.yaml"
+        into "build/libs/autoFVT"
+    }
+}
