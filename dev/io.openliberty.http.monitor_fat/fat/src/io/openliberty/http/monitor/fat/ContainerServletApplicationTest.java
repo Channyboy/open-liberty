@@ -11,6 +11,7 @@ package io.openliberty.http.monitor.fat;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -56,12 +57,16 @@ public class ContainerServletApplicationTest extends BaseTestClass {
         WebArchive simpleSerletWAR = ShrinkWrap
                         .create(WebArchive.class, "ServletApp.war")
                         .addPackage(
-                                    "io.openliberty.http.monitor.fat.servletApp");
+                                    "io.openliberty.http.monitor.fat.servletApp")
+                        .addAsManifestResource(new File("publish/resources/META-INF/microprofile-config.properties"),
+                                               "microprofile-config.properties");
 
         WebArchive wildCardServletWAR = ShrinkWrap
                         .create(WebArchive.class, "WildCardServlet.war")
                         .addPackage(
-                                    "io.openliberty.http.monitor.fat.wildCardServletApp");
+                                    "io.openliberty.http.monitor.fat.wildCardServletApp")
+                        .addAsManifestResource(new File("publish/resources/META-INF/microprofile-config.properties"),
+                                               "microprofile-config.properties");
 
         ShrinkHelper.exportDropinAppToServer(server, simpleSerletWAR,
                                              DeployOptions.SERVER_ONLY);

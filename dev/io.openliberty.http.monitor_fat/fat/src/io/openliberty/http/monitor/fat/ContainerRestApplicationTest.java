@@ -11,6 +11,7 @@ package io.openliberty.http.monitor.fat;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -29,6 +30,7 @@ import com.ibm.websphere.simplicity.log.Log;
 
 import componenttest.annotation.AllowedFFDC;
 import componenttest.annotation.Server;
+import componenttest.containers.SimpleLogConsumer;
 import componenttest.custom.junit.runner.FATRunner;
 import componenttest.topology.impl.LibertyServer;
 import jakarta.ws.rs.HttpMethod;
@@ -59,7 +61,9 @@ public class ContainerRestApplicationTest extends BaseTestClass {
         WebArchive testWAR = ShrinkWrap
                         .create(WebArchive.class, "RestApp.war")
                         .addPackage(
-                                    "io.openliberty.http.monitor.fat.restApp");
+                                    "io.openliberty.http.monitor.fat.restApp")
+                        .addAsManifestResource(new File("publish/resources/META-INF/microprofile-config.properties"),
+                                               "microprofile-config.properties");
 
         ShrinkHelper.exportDropinAppToServer(server, testWAR,
                                              DeployOptions.SERVER_ONLY);

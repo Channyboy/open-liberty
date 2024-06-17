@@ -35,7 +35,7 @@ public class ContainerNoAppTest extends BaseTestClass {
 
     private static Class<?> c = ContainerNoAppTest.class;
 
-    @Server("ContainerRestServer")
+    @Server("ContainerJustServer")
     public static LibertyServer server;
 
     @ClassRule //FileSystemBind, path is relative to AutoFVT folder.

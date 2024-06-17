@@ -112,7 +112,14 @@ public class JSPApplicationTest extends BaseTestClass {
 
         String res = requestHttpServlet(route, server, requestMethod);
 
-        assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+        /*
+         * If 200 isn't present. The server may have redirected the request to the default page
+         * and issued a 302.
+         */
+        if (!validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod)) {
+            responseStatus = "302";
+            assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+        }
 
         route = Constants.JSP_CONTEXT_ROOT + "/Testhtml.html";
         expectedRoute = Constants.JSP_CONTEXT_ROOT + "/\\*";
@@ -125,9 +132,9 @@ public class JSPApplicationTest extends BaseTestClass {
          * If 200 isn't present. The server may have redirected the request to the default page
          * and issued a 302.
          */
-        if (!validatePrometheusHTTPMetric(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod)) {
+        if (!validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod)) {
             responseStatus = "302";
-            assertTrue(validatePrometheusHTTPMetric(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
+            assertTrue(validateMpMetricsHttp(getVendorMetrics(server), expectedRoute, responseStatus, requestMethod));
         }
 
     }

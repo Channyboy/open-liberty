@@ -12,9 +12,11 @@ package io.openliberty.microprofile.telemetry20.internal.http;
 import java.time.Duration;
 import java.util.List;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
+
+import com.ibm.websphere.ras.Tr;
+import com.ibm.websphere.ras.TraceComponent;
 
 import io.openliberty.http.monitor.HttpStatAttributes;
 import io.openliberty.http.monitor.metrics.HTTPMetricAdapter;
@@ -31,27 +33,40 @@ import io.opentelemetry.context.Context;
 @Component(service = { HTTPMetricAdapter.class }, configurationPolicy = ConfigurationPolicy.IGNORE)
 public class MPTelemetryHTTPMetricsAdapterImpl implements HTTPMetricAdapter {
 
-    static final String INSTR_SCOPE = "io.openliberty.microprofile.telemetry20.internal.http";
+    private static final TraceComponent tc = Tr.register(MPTelemetryHTTPMetricsAdapterImpl.class);
 
-    @Activate
-    public void activate() {
-        System.out.println("Activating Telemetry HTTPMetricAdapter");
-    }
+    private static final String INSTR_SCOPE = "io.openliberty.microprofile.telemetry20.internal.http";
+
+    private static final String METRIC_NAME = "http.server.request.duration";
+
+    private static final String RUNTIME_INSTANCE_STR = "io.openliberty.microprofile.telemetry.runtime";
 
     @Override
     public void updateHttpMetrics(HttpStatAttributes httpStatAttributes, Duration duration, String appName) {
+        OpenTelemetry otelInstance = OpenTelemetryAccessor.getOpenTelemetryInfo((appName == null) ? RUNTIME_INSTANCE_STR : appName).getOpenTelemetry();
 
-        System.out.println("DO SOMETHING - appName " + appName);
-
-        OpenTelemetry otelInstance = OpenTelemetryAccessor.getOpenTelemetryInfo((appName == null) ? "SERVER" : appName).getOpenTelemetry();
-
+        /*
+         * Even if the HTTP call is served by the server/runtime, the "appName" can be non null.
+         * The AppName is retrieved through a ServletContext property and the "appname" can be the originating bundle.
+         * This would not be "registered" as an appname with the Otel runtime and will return null.
+         * We will then below retrieve a server/runtime instance.
+         *
+         */
         if (otelInstance == null) {
-            otelInstance = OpenTelemetryAccessor.getOpenTelemetryInfo("SERVER").getOpenTelemetry();
+            otelInstance = OpenTelemetryAccessor.getOpenTelemetryInfo(RUNTIME_INSTANCE_STR).getOpenTelemetry();
+            if (otelInstance == null) {
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                    Tr.debug(tc,
+                             String.format("Unable to resolve an OpenTelemetry instance for the HttpStatAttributes [%s] with application name [%s]", httpStatAttributes.toString(),
+                                           appName));
+                }
+                //do nothing - return
+                return;
+            }
         }
 
-        //use default boundaries
-        DoubleHistogram dHistogram = otelInstance.getMeterProvider().get(INSTR_SCOPE).histogramBuilder("http.server.request.duration").setUnit("seconds")
-                        .setDescription("test description")
+        //Use boundaries specified by Otel HTTP Metric semantic convention
+        DoubleHistogram dHistogram = otelInstance.getMeterProvider().get(INSTR_SCOPE).histogramBuilder(METRIC_NAME).setUnit("seconds")
                         .setExplicitBucketBoundariesAdvice(List.of(0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0)).build();
 
         Context ctx = Context.current();

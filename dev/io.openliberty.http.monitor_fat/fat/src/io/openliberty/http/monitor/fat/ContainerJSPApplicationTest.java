@@ -59,7 +59,9 @@ public class ContainerJSPApplicationTest extends BaseTestClass {
                         .add(new FileAsset(new File("test-applications/JspApp/resource/default.html")), "/default.html")
                         .add(new FileAsset(new File("test-applications/JspApp/resource/Testhtml.html")), "Testhtml.html")
                         .addPackage(
-                                    "io.openliberty.http.monitor.fat.jspApp");
+                                    "io.openliberty.http.monitor.fat.jspApp")
+                        .addAsManifestResource(new File("publish/resources/META-INF/microprofile-config.properties"),
+                                               "microprofile-config.properties");
 
         // test-applications\JspApp\src\io\openliberty\http\monitor\fat\jspApp\resource
         ShrinkHelper.exportDropinAppToServer(server, testWAR,
