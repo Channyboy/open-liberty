@@ -16,6 +16,7 @@ bVersion=1.0
 
 src: \
 	fat/src,\
+	fat/resource,\
 	test-applications/RestApp/src,\
 	test-applications/ServletApp/src,\
 	test-applications/WildCardServletApp/src,\
@@ -33,4 +34,5 @@ javac.target: 11
 	com.ibm.ws.org.osgi.annotation.versioning;version=latest,\
 	io.openliberty.jakarta.annotation.2.1;version=latest,\
 	io.openliberty.jakarta.restfulWS.3.0;version=latest,\
-	io.openliberty.jakarta.cdi.4.0;version=latest
+	io.openliberty.jakarta.cdi.4.0;version=latest,\
+	io.openliberty.org.testcontainers;version=latest
