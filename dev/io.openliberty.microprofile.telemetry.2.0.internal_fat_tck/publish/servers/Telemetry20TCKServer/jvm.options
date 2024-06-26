@@ -1,1 +1,3 @@
 -Dcom.ibm.tools.attach.enable=yes
+-Dcom.ibm.ws.beta.edition=true
+-Dlog.file.path=C:\devdir\OpenLiberty1\open-liberty\dev\build.image\wlp\usr\servers\Telemetry20TCKServer\logs\Telemetry20TCKLauncher.log

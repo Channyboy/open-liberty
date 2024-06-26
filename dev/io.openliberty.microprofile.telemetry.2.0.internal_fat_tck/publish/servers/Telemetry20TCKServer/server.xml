@@ -13,6 +13,7 @@
         <feature>componenttest-2.0</feature>
         <feature>localConnector-1.0</feature>
         <feature>cdi-4.0</feature>
+        <feature>monitor-1.0</feature>
         <feature>restfulWS-4.0</feature>
         <feature>jsonb-3.0</feature>
         <feature>mpConfig-3.1</feature>
@@ -25,6 +26,9 @@
         <feature>mpTelemetry-2.0</feature>
         <feature>concurrent-3.0</feature>
     </featureManager>
+
+
+	<!-- <logging tracingSpeification="*=info:io.openliberty.microprofile.telemetry.internal.common.*=all"/>-->
 
     <!-- Required by Arquillian ServletTestRunner -->
     <javaPermission className="java.lang.RuntimePermission" name="getClassLoader" />
