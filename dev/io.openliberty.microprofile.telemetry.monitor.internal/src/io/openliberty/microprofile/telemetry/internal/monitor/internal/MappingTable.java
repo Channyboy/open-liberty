@@ -30,14 +30,12 @@ public class MappingTable {
 	public static final int MBEAN_SECOND_SUBATTRIBUTE = 8;
 
 	public static final String THREADPOOL_TAG_NAME = "pool";
-
+	public static final String CONNECTIONPOOL_TAG_NAME = "datasource";
 	public static final String SESSION_TAG_NAME = "appname";
 
 	public static final String LONG_UP_DOWN_COUNTER = "LONGUPDOWNCOUNTER";
 	public static final String LONG_COUNTER = "LONGCOUNTER";
 	public static final String LONG_GAUGE = "LONGGAUGE";
-	
-
 
 	private static MappingTable singleton = null;
 
@@ -50,7 +48,8 @@ public class MappingTable {
 	}
 
 	/*
-	 * In MonitorMetrics, the metric names and atributes will be pre-pended with "io.openliberty."
+	 * In MonitorMetrics, the metric names and atributes will be pre-pended with
+	 * "io.openliberty."
 	 */
 	private MappingTable() {
 
@@ -84,6 +83,23 @@ public class MappingTable {
 				{ "session.invalidated_by_timeout", "session.invalidatedbyTimeout.total.description", LONG_COUNTER,
 						null, "InvalidatedCountbyTimeout", null, SESSION_TAG_NAME } };
 		mappingTable.put("WebSphere:type=SessionStats,name=*", sessionTable);
+
+		String[][] connectionPoolTable = new String[][] {
+				{ "connection_pool.creates", "connectionpool.create.total.description", LONG_COUNTER, null,
+						"CreateCount", null, CONNECTIONPOOL_TAG_NAME },
+				{ "connection_pool.destroyed", "connectionpool.destroy.total.description", LONG_COUNTER, null,
+						"DestroyCount", null, CONNECTIONPOOL_TAG_NAME },
+				{ "connection_pool.managed_connection.count", "connectionpool.managedConnections.description",
+						LONG_UP_DOWN_COUNTER, null, "ManagedConnectionCount", null, CONNECTIONPOOL_TAG_NAME },
+				{ "connection_pool.connection_handle.count", "connectionpool.connectionHandles.description",
+						LONG_UP_DOWN_COUNTER, null, "ConnectionHandleCount", null, CONNECTIONPOOL_TAG_NAME },
+				{ "connection_pool.free_connection.count", "connectionpool.freeConnections.description",
+						LONG_UP_DOWN_COUNTER, null, "FreeConnectionCount", null, CONNECTIONPOOL_TAG_NAME },
+				{ "connection_pool.queued_requests", "connectionpool.queuedRequests.total.description", LONG_COUNTER,
+						null, "WaitTimeDetails", "count", CONNECTIONPOOL_TAG_NAME },
+				{ "connection_pool.used_connections", "connectionpool.usedConnections.total.description", LONG_COUNTER,
+						null, "InUseTimeDetails", "count", CONNECTIONPOOL_TAG_NAME }, };
+		mappingTable.put("WebSphere:type=ConnectionPoolStats,name=*", connectionPoolTable);
 
 	}
 

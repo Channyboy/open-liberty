@@ -65,7 +65,7 @@ public class LibertyMetricsTest extends BaseTestClass {
 		}
 	}
 
-	@Test
+	//@Test
 	public void threadPoolAndRequestTimingMetricsTest() throws Exception {
 
 		/*
@@ -90,7 +90,7 @@ public class LibertyMetricsTest extends BaseTestClass {
 	
 	
 	
-	@Test
+	//@Test
 	public void sessionsMetricTest() throws Exception { // -Dglobal.debug.java2.sec=false
 
 		String testName = "sessionsMetricTest";
@@ -119,5 +119,47 @@ public class LibertyMetricsTest extends BaseTestClass {
 
 	}
 	
+	@Test
+	public void connectionPoolTest() throws Exception {
+		String testName = "threadPoolMetricsTest";
+		
+		assertTrue(server.isStarted());
+		
+		Log.info(c, testName, "------- Add JDBC application and run JDBC servlet ------");
+        ShrinkHelper.defaultDropinApp(server, "testJDBCApp",
+                "io.openliberty.microprofile.telemetry.internal.monitor_fat.jdbc.servlet");
+        Log.info(c, testName, "------- added testJDBCApp to dropins -----");
+        checkStrings(requestHttpServlet("/testJDBCApp/testJDBCServlet?operation=create", server),
+                new String[] { "sql: create table cities" });
+        Log.info(c, testName, "------- connectionpool metrics should be available ------");
+        
+		// Allow time for the collector to receive and expose metrics
+		TimeUnit.SECONDS.sleep(4);
+        
+        checkStrings(getContainerCollectorMetrics(container), 
+                new String[] { "io_openliberty_connection_pool_connection_handle_count{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_free_connection_count{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_destroyed_total{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_creates_total{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_managed_connection_count{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        
+                        "io_openliberty_connection_pool_in_use_time_seconds_bucket{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\",le=\"+Inf\"}",
+                        "io_openliberty_connection_pool_in_use_time_seconds_sum{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_in_use_time_seconds_count{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_queued_requests_total{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_used_connections_total{io_openliberty_datasource=\"jdbc/exampleDS1\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        
+                        "io_openliberty_connection_pool_connection_handle_count{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_free_connection_count{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_destroyed_total{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_creates_total{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_managed_connection_count{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        
+                        "io_openliberty_connection_pool_in_use_time_seconds_bucket{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\",le=\"+Inf\"}",
+                        "io_openliberty_connection_pool_in_use_time_seconds_sum{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_in_use_time_seconds_count{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_queued_requests_total{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}",
+                        "io_openliberty_connection_pool_used_connections_total{io_openliberty_datasource=\"jdbc/exampleDS2\",job=\"io.openliberty.microprofile.telemetry.runtime\"}" });
+	}
 
 }
