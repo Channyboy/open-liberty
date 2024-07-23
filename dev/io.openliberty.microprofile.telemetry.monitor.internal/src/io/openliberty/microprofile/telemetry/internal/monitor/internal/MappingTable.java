@@ -74,7 +74,7 @@ public class MappingTable {
 		String[][] threadPoolTable = new String[][] {
 				{ "threadpool.active_threads", "threadpool.activeThreads.description", LONG_UP_DOWN_COUNTER, THREAD_UNIT,
 						"ActiveThreads", null, THREADPOOL_TAG_NAME },
-				{ "threadpool.size", "threadpool.size.description", LONG_GAUGE, THREAD_UNIT, "PoolSize", null,
+				{ "threadpool.size", "threadpool.size.description", LONG_UP_DOWN_COUNTER, THREAD_UNIT, "PoolSize", null,
 						THREADPOOL_TAG_NAME } };
 		mappingTable.put("WebSphere:type=ThreadPoolStats,name=*", threadPoolTable);
 
