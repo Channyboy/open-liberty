@@ -62,9 +62,8 @@ public class MetricsManager {
 
     /**
      *
-     * @param httpStatAttributes
-     * @param duration
-     * @param appName            The appName, can be null to indicate server context
+     * @param poolName JNDI name of the pool (i.e., data source)
+     * @param duration recorded Duration of the wait time
      */
     public void updateWaitTimeMetrics(String poolName, Duration duration) {
         metricRuntimes.stream().forEach(adapters -> adapters.updateWaitTimeMetrics(poolName, duration, getApplicationName()));
@@ -72,9 +71,8 @@ public class MetricsManager {
 
     /**
      *
-     * @param httpStatAttributes
-     * @param duration
-     * @param appName            The appName, can be null to indicate server context
+     * @param poolName JNDI name of the pool (i.e., data source)
+     * @param Duration recorded Duration of the (in) use time.
      */
     public void updateInUseTimeMetrics(String poolName, Duration duration) {
         metricRuntimes.stream().forEach(adapters -> adapters.updateInUseTimeMetrics(poolName, duration, getApplicationName()));
