@@ -40,9 +40,9 @@ public class MPTelemetryConnectionPoolMetricsAdapterImpl implements ConnectionPo
         OpenTelemetry otelInstance = OpenTelemetryAccessor.getOpenTelemetryInfo((appName == null) ? OpenTelemetryConstants.OTEL_RUNTIME_INSTANCE_NAME : appName).getOpenTelemetry();
 
         /*
-         * The AppName is retrieved through a ServletContext property and the "appname" can be the originating bundle.
-         * This would not be "registered" as an appname with the Otel runtime and will return null.
-         * We will then below retrieve a server/runtime instance.
+         * AppName is retrived through component metadata.
+         * Since we're running this through method call from the probed methods.
+         * We "should" always return an appname
          *
          */
         if (otelInstance == null) {
@@ -61,12 +61,13 @@ public class MPTelemetryConnectionPoolMetricsAdapterImpl implements ConnectionPo
         //Use boundaries specified by Otel DB metrics  semantic convention
         DoubleHistogram dHistogram = otelInstance.getMeterProvider().get(INSTR_SCOPE).histogramBuilder(metricName)
                         .setUnit(OpenTelemetryConstants.OTEL_SECONDS_UNIT)
-                        .setDescription(OpenTelemetryConstants.HTTP_SERVER_REQUEST_DURATION_DESC)
+                        .setDescription(description)
                         .setExplicitBucketBoundariesAdvice(List.of(0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0)).build();
 
         Context ctx = Context.current();
 
         double seconds = duration.toNanos() * NANO_CONVERSION;
+
         dHistogram.record(seconds, Attributes.builder().put(OpenTelemetryConstants.NAME_SPACE_PREFIX + OpenTelemetryConstants.DATASOURCE_ATTRIBUTE, poolName).build(), ctx);
 
     }

@@ -55,7 +55,7 @@ public class MetricsManager {
         }
 
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
-            Tr.debug(tc, "No RestMetricManager Instance available ");
+            Tr.debug(tc, "No MetricsManager Instance available ");
         }
         return null;
     }
