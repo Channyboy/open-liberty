@@ -53,10 +53,10 @@ DynamicImport-Package: \
 	com.ibm.wsspi.org.osgi.service.event;version=latest,\
 	io.openliberty.webcontainer.servlet.6.0.internal,\
 	com.ibm.ws.transport.http,\
-	com.ibm.ws.webcontainer.servlet.4.0.jakarta,\
+	com.ibm.ws.webcontainer.servlet.4.0,\
 	com.ibm.ws.monitor,\
-	io.openliberty.jakarta.servlet.6.0;version=latest,\
-	com.ibm.ws.webcontainer.jakarta;version=latest,\
+	com.ibm.websphere.javaee.servlet.4.0;version=latest,\
+	com.ibm.ws.webcontainer;version=latest,\
 	com.ibm.ws.org.osgi.annotation.versioning;version=latest,\
 	com.ibm.ws.channelfw;version=latest,\
 	com.ibm.ws.container.service,\
