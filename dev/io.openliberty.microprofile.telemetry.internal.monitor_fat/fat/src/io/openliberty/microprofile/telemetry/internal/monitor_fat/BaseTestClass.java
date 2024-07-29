@@ -85,7 +85,7 @@ public abstract class BaseTestClass {
     
     protected void checkStrings(String metricsText, String[] expectedString) {
         for (String m : expectedString) {
-            if (!metricsText.contains(m)) {
+            if (!metricsText.matches(m)) {
                 Log.info(c, "checkStrings", "Failed:\n" + metricsText);
                 Assert.fail("Did not contain string: " + m);
             }
