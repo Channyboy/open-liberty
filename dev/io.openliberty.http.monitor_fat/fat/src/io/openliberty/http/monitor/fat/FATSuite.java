@@ -19,7 +19,7 @@ import componenttest.rules.repeater.FeatureReplacementAction;
 import componenttest.rules.repeater.RepeatTests;
 
 @RunWith(Suite.class)
-@MinimumJavaLevel(javaLevel = 11)
+@MinimumJavaLevel(javaLevel = 8)
 @SuiteClasses({
                 NoAppTest.class,
                 JSPApplicationTest.class,
