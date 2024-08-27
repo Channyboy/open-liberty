@@ -91,4 +91,4 @@ WS-TraceGroup: METRICS
 	com.ibm.ws.org.osgi.annotation.versioning;version=latest,\
 	com.ibm.ws.microprofile.metrics.common;version=latest,\
 	com.ibm.ws.microprofile.metrics;version=latest,\
-	io.openliberty.http.monitor
+	io.openliberty.http.monitor.internal

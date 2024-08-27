@@ -12,6 +12,6 @@
 #*******************************************************************************
 -include= ~../cnf/resources/bnd/transform.props
 
-Bundle-Name: io.openliberty.http.monitor.jakarta
-Bundle-SymbolicName: io.openliberty.http.monitor.jakarta
+Bundle-Name: io.openliberty.http.monitor.internal.jakarta
+Bundle-SymbolicName: io.openliberty.http.monitor.internal.jakarta
 

@@ -11,6 +11,6 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
-Bundle-Name: io.openliberty.http.monitor
-Bundle-SymbolicName: io.openliberty.http.monitor
+Bundle-Name: io.openliberty.http.monitor.internal
+Bundle-SymbolicName: io.openliberty.http.monitor.internal
 
