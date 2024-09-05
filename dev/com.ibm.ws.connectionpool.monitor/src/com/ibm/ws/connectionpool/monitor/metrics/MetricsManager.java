@@ -27,7 +27,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
-import com.ibm.ws.kernel.productinfo.ProductInfo;
 
 @Component(configurationPid = "com.ibm.ws.monitor.internal.MonitoringFrameworkExtender", configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true)
 public class MetricsManager {
@@ -107,7 +106,7 @@ public class MetricsManager {
     private void resolveMonitorFilter(Map<String, Object> properties) {
         String filter;
 
-        if ((filter = (String) properties.get(MONITORING_GROUP_FILTER)) != null && filter.length() != 0) {
+        if ((filter = (String) properties.get(MONITORING_GROUP_FILTER)) != null) {
             // Original MonitoringFrameWorkExtender matches case
 
             if (filter.length() > 0) {

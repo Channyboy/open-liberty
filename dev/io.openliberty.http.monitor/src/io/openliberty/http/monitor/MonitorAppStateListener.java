@@ -75,8 +75,7 @@ public class MonitorAppStateListener implements ApplicationStateListener{
     
     private void resolveMonitorFilter(Map<String, Object> properties) {
         String filter;
-
-        if ((filter = (String) properties.get(MONITORING_GROUP_FILTER)) != null && filter.length() != 0) {
+        if ((filter = (String) properties.get(MONITORING_GROUP_FILTER)) != null) {
             // Original MonitoringFrameWorkExtender matches case
 
             if (filter.length() > 0) {
@@ -92,7 +91,6 @@ public class MonitorAppStateListener implements ApplicationStateListener{
              */
         	isHTTPEnabled = true;
         }
-        
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
             Tr.debug(tc, String.format("HTTP filter is enabled set to: [%s]", isHTTPEnabled));
         }
