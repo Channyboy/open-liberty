@@ -20,8 +20,6 @@ import com.ibm.websphere.monitor.meters.MeterCollection;
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
 import com.ibm.ws.http.dispatcher.internal.channel.HttpDispatcherLink;
-import com.ibm.ws.kernel.productinfo.ProductInfo;
-import com.ibm.ws.webcontainer.servlet.ServletWrapper;
 import com.ibm.wsspi.http.channel.values.StatusCodes;
 import com.ibm.wsspi.pmi.factory.StatisticActions;
 
@@ -31,7 +29,6 @@ import com.ibm.wsspi.http.HttpRequest;
 
 import java.time.Duration;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -198,12 +195,9 @@ public class HttpServerStatsMonitor extends StatisticActions {
 	public void updateHttpStatDuration(HttpStatAttributes.Builder builder, Duration duration, String appName) {
 
 		HttpStatAttributes httpStatsAttributes;
-		try {
-			httpStatsAttributes = builder.build();
-		} catch (IllegalStateException ise) {
-			//Nothing to do here
-			return;
-		}
+		
+		httpStatsAttributes = builder.build();
+		if (httpStatsAttributes == null) return;
 		
 		/*
 		 * Create and/or update MBean
@@ -222,7 +216,6 @@ public class HttpServerStatsMonitor extends StatisticActions {
 
 		//Monitor bundle when updating statistics will do synchronization
 		httpServerStats.updateDuration(duration);
-
 		
 		
 		if (MetricsManager.getInstance() != null ) {
@@ -281,44 +274,6 @@ public class HttpServerStatsMonitor extends StatisticActions {
 			}
 		}
 	}
-	
-
-//	/**
-//	 * Resolve the object name (specifically the name property)
-//	 * <code> domain:type=type,name="this"</code>
-//	 * 
-//	 * @param httpStatAttributes
-//	 * @return
-//	 */
-//	private String resolveStatsKey(HttpStatAttributes httpStatAttributes) {
-//		
-//		Optional<String> httpRoute = httpStatAttributes.getHttpRoute();
-//		Optional<String> errorType = httpStatAttributes.getErrorType();
-//		String requestMethod = httpStatAttributes.getRequestMethod();
-//		Optional<Integer> responseStatus = httpStatAttributes.getResponseStatus();
-//
-//		StringBuilder sb = new StringBuilder();
-//		sb.append("\""); // starting quote
-//		sb.append("method:" + requestMethod);
-//		
-//		/*
-//		 * Status, Route  and errorType may be null.
-//		 * In which cas we will not append it to the name property
-//		 */
-//		responseStatus.ifPresent(status -> sb.append(";status:" + status));
-//
-//		
-//		httpRoute.ifPresent(route -> {
-//			sb.append(";httpRoute:" + route.replace("*", "\\*"));
-//		});
-//
-//		errorType.ifPresent(error -> {
-//			sb.append(";errorType:" + error);
-//		});
-//
-//		sb.append("\""); // ending quote
-//		return sb.toString();
-//	}
 	
     @ProbeAtEntry
     @ProbeSite(clazz = "com.ibm.ws.webcontainer.servlet.ServletWrapper", method = "destroy")

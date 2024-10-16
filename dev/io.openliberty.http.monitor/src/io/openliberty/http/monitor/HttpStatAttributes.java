@@ -50,10 +50,9 @@ public class HttpStatAttributes {
 	/**
 	 * Constructor for HttpStatsAttributes. This should not be called directly, but should be instantiated through {@link Builder#build()}
 	 * 
-	 * @param builder 
-	 * @throws IllegalStateException
+	 * @param builder see {@link Builder}
+	 * @throws IllegalStateException if the builder's validation fails
 	 */
-	@FFDCIgnore(IllegalStateException.class)
 	public HttpStatAttributes(Builder builder) throws IllegalStateException {
 		
 		if (!builder.validate()) {
@@ -112,10 +111,18 @@ public class HttpStatAttributes {
 		return sb.toString();
 	}
 	
+	/**
+	 * The error typeif it exists, null otherwise
+	 * @return a String that represents the error type or null if it does not exist
+	 */
 	public String getErrorType() {
 		return errorType;
 	}
 
+	/**
+	 * The Exception if it exists, null otherwise
+	 * @return an Exception or null if it does not exist
+	 */
 	public Exception getException() {
 		return exception;
 	}
@@ -140,6 +147,10 @@ public class HttpStatAttributes {
 		return serverName;
 	}
 
+	/**
+	 * The http route if it exists, null otherwise
+	 * @return a String that represents the http route or null if it does not exist
+	 */
 	public String getHttpRoute() {
 		return httpRoute;
 	}
@@ -148,6 +159,11 @@ public class HttpStatAttributes {
 		return serverPort;
 	}
 
+
+	/**
+	 * The response status if it exists, null otherwise
+	 * @return An Integer representing the  response status or null if it does not exist
+	 */
 	public Integer getResponseStatus() {
 		return responseStatus;
 	}
@@ -207,13 +223,25 @@ public class HttpStatAttributes {
 		 * @return Instance of {@link HttpStatAttributes}
 		 * @throws IllegalStateException
 		 */
-		public HttpStatAttributes build() throws IllegalStateException {
+		@FFDCIgnore(value = { IllegalStateException.class })
+		public HttpStatAttributes build() {
 			if (!validate()) {
 				if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
 					Tr.debug(tc, String.format("Invalid HTTP Stats attributes : \n %s", toString()));
 				}
 			}
-			return new HttpStatAttributes(this);
+			
+			/*
+			 * Because of above check, we should never really actually come into this. 
+			 * The constructor does the same check again (for any calls made by others who somehow got their hands
+			 * on to an instance of a Builder.
+			 */
+			try {
+				return new HttpStatAttributes(this);
+			} catch(IllegalStateException ise) {
+				//do nothing
+			}
+			return null;
 		}
 
 		public Builder withRequestMethod(String requestMethod) {
