@@ -16,3 +16,7 @@ dependencies {
 }
 
 addRequiredLibraries.dependsOn addJakartaTransformer
+
+dependencies {
+  requiredLibs project(':io.openliberty.microprofile.health.internal_fat.common')
+}

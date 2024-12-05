@@ -23,6 +23,8 @@ import com.ibm.websphere.simplicity.PortType;
 import componenttest.annotation.AllowedFFDC;
 import componenttest.annotation.Server;
 import componenttest.custom.junit.runner.FATRunner;
+import componenttest.custom.junit.runner.Mode;
+import componenttest.custom.junit.runner.Mode.TestMode;
 import componenttest.rules.repeater.RepeatTests;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.utils.tck.TCKResultsInfo.Type;
@@ -65,7 +67,7 @@ public class Health40JavaEETCKLauncher {
 
     @Test
     @AllowedFFDC() // The tested deployment exceptions cause FFDC so we have to allow for this.
-    //@Mode(TestMode.FULL)
+    @Mode(TestMode.FULL)
     public void launchHealth40Tck() throws Exception {
         String protocol = "http";
         String host = server.getHostname();
