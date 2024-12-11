@@ -34,6 +34,7 @@ dependencies {
   requiredLibs 'org.apache.johnzon:johnzon-core:1.1.0'
   
   addRequiredLibraries.dependsOn addJakartaTransformer
+  requiredLibs project(':io.openliberty.microprofile.health.internal_fat.common')
 }
 
 task addKafkaClientLibs (type: Copy) {

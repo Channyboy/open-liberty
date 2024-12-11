@@ -29,11 +29,13 @@ public class HealthActions {
 
     public static final String MP61_MPHEALTH40_ID = MicroProfileActions.MP61_ID + "_MPHEALTH40";
 
+    //EE8
     public static final FeatureSet MP41_MPHEALTH40 = MicroProfileActions.MP41
                     .removeFeature("mpHealth-3.1")
                     .addFeature("mpHealth-4.0")
                     .build(MP41_MPHEALTH40_ID);
 
+    //EE7
     public static final FeatureSet MP14_MPHEALTH40 = MicroProfileActions.MP14
                     .removeFeature("mpHealth-1.0")
                     .addFeature("mpHealth-4.0")
