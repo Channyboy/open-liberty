@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
@@ -39,4 +39,7 @@ public class HealthCheckConstants {
     // Default Overall Startup Status MP Config property name
     public static final String DEFAULT_OVERALL_STARTUP_STATUS = "mp.health.default.startup.empty.response";
 
+    // MP Health Config elements
+    public static final String CONFIG_ATTRIBUTE_ENABLE_FILE = "enableFile";
+    public static final String CONFIG_ATTRIBUTE_FILE_PERIOD_SECONDS = "filePeriodSeconds";
 }
