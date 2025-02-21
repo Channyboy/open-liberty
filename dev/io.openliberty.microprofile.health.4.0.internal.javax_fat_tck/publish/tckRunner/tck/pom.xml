@@ -20,6 +20,7 @@
 
     <properties>
         <microprofile.health.version>3.1</microprofile.health.version>
+        <microprofile.health.4.0.version>4.0.1</microprofile.health.4.0.version>
         <arquillian.version>1.7.0.Alpha13</arquillian.version>
         <arquillian.liberty.managed.jakarta.version>2.1.1</arquillian.liberty.managed.jakarta.version>
         <testng.version>7.5.1</testng.version>
@@ -72,9 +73,7 @@
         <dependency>
             <groupId>org.eclipse.microprofile.health</groupId>
             <artifactId>microprofile-health-api</artifactId>
-            <version>${microprofile.health.version}</version>
-            <scope>system</scope>
-            <systemPath>${io.openliberty.javax.org.eclipse.microprofile.health.4.0_}</systemPath>
+            <version>${microprofile.health.4.0.version}</version> <!-- Points to public artifact for the 4.0.1 API; we want to be able to test against using this --> 
         </dependency>
 
         <!--<dependency>

@@ -2,7 +2,7 @@
 symbolicName=io.openliberty.mpHealth.4.0.ee-7.0
 singleton=true
 -features=\
- io.openliberty.javax.org.eclipse.microprofile.health-4.0,\
+ io.openliberty.org.eclipse.microprofile.health.javax-4.0,\
  com.ibm.websphere.appserver.mpConfig-1.3,\
  com.ibm.websphere.appserver.jsonp-1.0,\
  com.ibm.websphere.appserver.cdi-1.2,\
@@ -11,6 +11,6 @@ singleton=true
  com.ibm.websphere.appserver.eeCompatible-7.0
 -bundles=\
   io.openliberty.microprofile.health.4.0.internal; apiJar=false; location:="lib/"
-kind=noship
-edition=full
+kind=beta
+edition=core
 WLP-Activation-Type: parallel 
