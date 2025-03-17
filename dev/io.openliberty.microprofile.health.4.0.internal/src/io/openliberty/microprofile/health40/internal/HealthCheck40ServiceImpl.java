@@ -277,7 +277,6 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
     /** {@inheritDoc} */
     @Override
     public void startFileHealthCheckProcesses() {
-
         /*
          * If we got here, that means we've been restored (or this is a normal run)
          */
