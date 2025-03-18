@@ -146,6 +146,15 @@ public class MPHealthTestFileBased extends FATServletClient {
     }
 
     private void configureBeforeRestore() {
+        Log.info(getClass(), "configureBeforeRestore", "Is this before a restore? ");
+
+        String serverRoot = server.getServerRoot();
+        File serverRootDirFile = new File(serverRoot);
+        assertTrue(HealthFileUtils.HEALTH_DIR_SHOULD_HAVE, HealthFileUtils.getHealthDirFile(serverRootDirFile).exists());
+        assertFalse(HealthFileUtils.STARTED_SHOULD_NOT_HAVE, HealthFileUtils.getStartFile(serverRootDirFile).exists());
+        assertFalse(HealthFileUtils.LIVE_SHOULD_NOT_HAVE, HealthFileUtils.getLiveFile(serverRootDirFile).exists());
+        assertFalse(HealthFileUtils.READY_SHOULD_NOT_HAVE, HealthFileUtils.getReadyFile(serverRootDirFile).exists());
+
         try {
             Log.info(getClass(), testName.getMethodName(), "Configuring during restore: " + testMethod);
             switch (testMethod) {
