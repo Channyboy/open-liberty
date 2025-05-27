@@ -12,6 +12,7 @@
  *******************************************************************************/
 package io.openliberty.checkpoint.fat.mp;
 
+import static io.openliberty.checkpoint.fat.mp.FATSuite.configureEnvVariable;
 import static io.openliberty.checkpoint.fat.mp.FATSuite.getTestMethod;
 import static io.openliberty.checkpoint.fat.mp.FATSuite.getTestMethodNameOnly;
 import static org.junit.Assert.assertEquals;
@@ -19,7 +20,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -143,6 +146,9 @@ public class MPHealthTestFileBased extends FATServletClient {
 
         try {
             server.addDropinOverrideConfiguration("MPHealthDropinConfigChange/override.xml");
+            Map<String, String> config = new HashMap<>();
+            config.put("MP_HEALTH_CHECK_INTERVAL", "15s");
+            configureEnvVariable(server, config);
         } catch (Exception e) {
             throw new AssertionError("Unexpected error configuring test.", e);
         }
