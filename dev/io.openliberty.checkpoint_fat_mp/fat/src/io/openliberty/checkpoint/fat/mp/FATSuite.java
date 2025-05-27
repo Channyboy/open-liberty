@@ -53,15 +53,16 @@ import io.openliberty.microprofile.health.internal_fat.shared.HealthActions;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-		AlwaysPassesTest.class,
+                AlwaysPassesTest.class,
                 MPOpenTracingJaegerTraceTest.class,
-		MPFaultToleranceTimeoutTest.class,
-               	MPJWTTest.class,
+                MPFaultToleranceTimeoutTest.class,
+                MPJWTTest.class,
                 MPMetricsTest.class,
                 MPTelemetryTest.class,
                 MPHealthTest.class,
+                MPHealthTestFileBased.class,
                 MPTelemetryJaxRsIntegrationTest.class,
-		OpenAPIConfigTest.class
+                OpenAPIConfigTest.class
 })
 
 public class FATSuite {
