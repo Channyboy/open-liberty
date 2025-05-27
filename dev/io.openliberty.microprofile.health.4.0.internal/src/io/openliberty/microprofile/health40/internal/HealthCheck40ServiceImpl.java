@@ -365,6 +365,9 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
             if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
                 Tr.debug(tc, updateValueMessage);
             }
+        } else {
+            stopUpdateTimers();
+            checkIntervalMilliseconds = HealthCheckConstants.CONFIG_NOT_SET;
         }
     }
 
@@ -415,10 +418,10 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
     protected void modified(ComponentContext context, Map<String, Object> properties) {
         processConfig();
         /*
-         * Only "start" the health check process if we previously have not, and we're not part of a check point scenari
+         * Only "start" the health check process if we previously have not, and we're not part of a check point scenario
          */
         if (isFileHealthCheckingEnabled() && !isHCProcessStarted && CheckpointPhase.getPhase().equals(CheckpointPhase.INACTIVE)) {
-            startFileHealthCheckProcesses();
+            startFileHealthCheckProcessesInternal();
         }
     }
 
@@ -431,9 +434,14 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
         isCheckPointFinished = true;
 
         /*
-         * Mostly for an instantOn scenario.
+         * For an instantOn scenario, re-process config including for env var
          */
-        //processConfig();
+        processConfig(true);
+
+        startFileHealthCheckProcessesInternal();
+    }
+
+    public void startFileHealthCheckProcessesInternal() {
 
         /*
          * Last flag in the if is the beta guard
@@ -471,11 +479,15 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
         }
     }
 
+    public void processConfig() {
+        processConfig(false);
+    }
+
     /*
      * ReProcess config, right before starting health check process.
      * For instantOn.
      */
-    public void processConfig() {
+    public void processConfig(boolean withEnv) {
         /*
          * Beta guard
          */
@@ -484,19 +496,24 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
 
             Map<String, Object> properties = (Map<String, Object>) compContext.getProperties();
 
-            String serverCheckIntervalConfig;
-            if ((serverCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_CHECK_INTERVAL)) != null) {
-                processCheckIntervalConfig(serverCheckIntervalConfig);
-            } else {
-                processCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_CHECK_INTERVAL));
-            }
+            if (withEnv) {
+                String serverCheckIntervalConfig;
+                if ((serverCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_CHECK_INTERVAL)) != null) {
+                    processCheckIntervalConfig(serverCheckIntervalConfig);
+                } else {
+                    processCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_CHECK_INTERVAL));
+                }
 
-            //resolve startupCheckInterval config
-            String serverStartupCheckIntervalConfig;
-            if ((serverStartupCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_STARTUP_CHECK_INTERVAL)) != null) {
-                processStartupCheckIntervalConfig(serverStartupCheckIntervalConfig);
+                //resolve startupCheckInterval config
+                String serverStartupCheckIntervalConfig;
+                if ((serverStartupCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_STARTUP_CHECK_INTERVAL)) != null) {
+                    processStartupCheckIntervalConfig(serverStartupCheckIntervalConfig);
+                } else {
+                    processStartupCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_STARTUP_CHECK_INTERVAL));
+                }
             } else {
-                processStartupCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_STARTUP_CHECK_INTERVAL));
+                processCheckIntervalConfig((String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_CHECK_INTERVAL));
+                processStartupCheckIntervalConfig((String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_STARTUP_CHECK_INTERVAL));
             }
 
             /*
@@ -528,7 +545,7 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
                      */
                     Set<String> apps = validateApplicationSet();
                     if (apps.size() == 0) {
-                        startFileHealthCheckProcesses();
+                        startFileHealthCheckProcessesInternal();
                     }
                 }
 
