@@ -1,0 +1,4 @@
+<server>
+     <mpHealth startupCheckInterval="1s" checkInterval="4s" />
+</server>
+

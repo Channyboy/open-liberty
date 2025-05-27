@@ -140,6 +140,8 @@ public class MPHealthTestFileBased extends FATServletClient {
         assertFalse(HealthFileUtils.STARTED_SHOULD_NOT_HAVE, HealthFileUtils.getStartFile(serverRootDirFile).exists());
         assertFalse(HealthFileUtils.LIVE_SHOULD_NOT_HAVE, HealthFileUtils.getLiveFile(serverRootDirFile).exists());
         assertFalse(HealthFileUtils.READY_SHOULD_NOT_HAVE, HealthFileUtils.getReadyFile(serverRootDirFile).exists());
+
+        server.addDropinOverrideConfiguration("MPHealthDropinConfigChange/override.xml");
     }
 
     @After
