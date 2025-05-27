@@ -45,6 +45,7 @@ import com.ibm.ws.kernel.productinfo.ProductInfo;
 import com.ibm.ws.microprofile.health.internal.AppTracker;
 import com.ibm.ws.microprofile.health.services.HealthCheckBeanCallException;
 
+import io.openliberty.checkpoint.spi.CheckpointPhase;
 import io.openliberty.microprofile.health.internal.common.HealthCheckConstants;
 import io.openliberty.microprofile.health30.internal.HealthCheck30HttpResponseBuilder;
 import io.openliberty.microprofile.health40.services.HealthCheck40Executor;
@@ -91,6 +92,8 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
 
     protected volatile boolean isCheckPointFinished = false;
 
+    protected volatile boolean isHCProcessStarted = false;
+
     /**
      *
      * Instead of relying on checking if checkIntervalMilliseconds is > 0,
@@ -129,15 +132,17 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
     protected void unsetAppTracker(AppTracker service) {
         if (this.appTracker == service) {
             this.appTracker = null;
-            stopTimers();
+            stopAllTimeres();
         }
     }
+
+    private ComponentContext compContext = null;
 
     /**
      * Stop all the timers.
      * Potential use: Server is shutting down and references are being deregistered
      */
-    private synchronized void stopTimers() {
+    private synchronized void stopAllTimeres() {
         /*
          * Beta-guard
          * Not really needed, but just in case.
@@ -169,6 +174,46 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
         }
     }
 
+    private synchronized void stopUpdateTimers() {
+        /*
+         * Beta-guard
+         * Not really needed, but just in case.
+         */
+        if (ProductInfo.getBetaEdition()) {
+            if (updateLiveTimer != null) {
+                updateLiveTimer.cancel();
+                updateLiveTimer = null;
+            }
+            if (updateReadyTimer != null) {
+                updateReadyTimer.cancel();
+                updateReadyTimer = null;
+            }
+        }
+    }
+
+    private synchronized void stopCreateTimers() {
+        /*
+         * Beta-guard
+         * Not really needed, but just in case.
+         */
+        if (ProductInfo.getBetaEdition()) {
+            if (createStartedTimer != null) {
+                createStartedTimer.cancel();
+                createStartedTimer = null;
+            }
+
+            if (createLiveTimer != null) {
+                createLiveTimer.cancel();
+                createLiveTimer = null;
+            }
+
+            if (createReadyTimer != null) {
+                createReadyTimer.cancel();
+                createReadyTimer = null;
+            }
+        }
+    }
+
     @Reference(service = HealthCheck40Executor.class)
     protected void setHealthExecutor(HealthCheck40Executor service) {
         this.hcExecutor = service;
@@ -177,81 +222,83 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
     protected void unsetHealthExecutor(HealthCheck40Executor service) {
         if (this.hcExecutor == service) {
             this.hcExecutor = null;
-            stopTimers();
+            stopAllTimeres();
         }
     }
 
     @Activate
     protected void activate(ComponentContext cc, Map<String, Object> properties) {
+        compContext = cc;
 
-        /*
-         * Beta guard
-         */
-        if (ProductInfo.getBetaEdition()) {
-            //resolve checkInterval config
-
-            /*
-             * Activation time is only time when check env var
-             * for the MP_HEALTH_CHECK_INTERVAL only if server.xml
-             * does not exist (server.xml overrides everything once server starts).
-             */
-            String serverCheckIntervalConfig;
-            if ((serverCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_CHECK_INTERVAL)) != null) {
-                processCheckIntervalConfig(serverCheckIntervalConfig);
-            } else {
-                processCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_CHECK_INTERVAL));
-            }
-
-            //resolve startupCheckInterval config
-            String serverStartupCheckIntervalConfig;
-            if ((serverStartupCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_STARTUP_CHECK_INTERVAL)) != null) {
-                processStartupCheckIntervalConfig(serverStartupCheckIntervalConfig);
-            } else {
-                processStartupCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_STARTUP_CHECK_INTERVAL));
-            }
-
-            if (isFileHealthCheckingEnabled()) {
-                //Validate system for File Health Checks (i.e., File I/O)
-                try {
-                    isValidSystemForFileHealthCheck = HealthFileUtils.isValidSystem();
-                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
-                        Tr.debug(tc, "Is system valid for File health check: " + isValidSystemForFileHealthCheck);
-                    }
-                } catch (IOException e) {
-                    //Let FFDC handle this.
-                }
-
-                /*
-                 * Handle special startup case(s)
-                 */
-                if (isValidSystemForFileHealthCheck) {
-
-                    /*
-                     * If there are no applications deployed.
-                     * Kick off the file health check processes.
-                     *
-                     * These will immediately create all three files
-                     * and then continually run the live and ready checks.
-                     * (which will always be UP.. forever.. and ever..).
-                     */
-                    Set<String> apps = validateApplicationSet();
-                    if (apps.size() == 0) {
-                        startFileHealthCheckProcesses();
-                    }
-                }
-
-            }
-            /*
-             * If createUpdateInterval is set (not -1) , but fileUpdateInterval is not set. Issue warning.
-             */
-            else if (!isFileHealthCheckingEnabled() && (startupCheckIntervalMilliseconds != HealthCheckConstants.CONFIG_NOT_SET)) {
-
-                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
-                    Tr.warning(tc, "startup.check.interval.config.only.set.CWMMH01012W");
-                }
-            }
-
-        }
+        processConfig();
+//        /*
+//         * Beta guard
+//         */
+//        if (ProductInfo.getBetaEdition()) {
+//            //resolve checkInterval config
+//
+//            /*
+//             * Activation time is only time when check env var
+//             * for the MP_HEALTH_CHECK_INTERVAL only if server.xml
+//             * does not exist (server.xml overrides everything once server starts).
+//             */
+//            String serverCheckIntervalConfig;
+//            if ((serverCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_CHECK_INTERVAL)) != null) {
+//                processCheckIntervalConfig(serverCheckIntervalConfig);
+//            } else {
+//                processCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_CHECK_INTERVAL));
+//            }
+//
+//            //resolve startupCheckInterval config
+//            String serverStartupCheckIntervalConfig;
+//            if ((serverStartupCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_STARTUP_CHECK_INTERVAL)) != null) {
+//                processStartupCheckIntervalConfig(serverStartupCheckIntervalConfig);
+//            } else {
+//                processStartupCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_STARTUP_CHECK_INTERVAL));
+//            }
+//
+//            if (isFileHealthCheckingEnabled()) {
+//                //Validate system for File Health Checks (i.e., File I/O)
+//                try {
+//                    isValidSystemForFileHealthCheck = HealthFileUtils.isValidSystem();
+//                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+//                        Tr.debug(tc, "Is system valid for File health check: " + isValidSystemForFileHealthCheck);
+//                    }
+//                } catch (IOException e) {
+//                    //Let FFDC handle this.
+//                }
+//
+//                /*
+//                 * Handle special startup case(s)
+//                 */
+//                if (isValidSystemForFileHealthCheck) {
+//
+//                    /*
+//                     * If there are no applications deployed.
+//                     * Kick off the file health check processes.
+//                     *
+//                     * These will immediately create all three files
+//                     * and then continually run the live and ready checks.
+//                     * (which will always be UP.. forever.. and ever..).
+//                     */
+//                    Set<String> apps = validateApplicationSet();
+//                    if (apps.size() == 0) {
+//                        startFileHealthCheckProcesses();
+//                    }
+//                }
+//
+//            }
+//            /*
+//             * If createUpdateInterval is set (not -1) , but fileUpdateInterval is not set. Issue warning.
+//             */
+//            else if (!isFileHealthCheckingEnabled() && (startupCheckIntervalMilliseconds != HealthCheckConstants.CONFIG_NOT_SET)) {
+//
+//                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+//                    Tr.warning(tc, "startup.check.interval.config.only.set.CWMMH01012W");
+//                }
+//            }
+//
+//        }
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
             Tr.debug(tc, "HealthCheckServiceImpl is activated");
         }
@@ -298,7 +345,7 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
             if ((!(prevCheckIntervalConfigMilliseconds < 0) && (prevCheckIntervalConfigMilliseconds != checkIntervalMilliseconds))) {
 
                 updateValueMessage = "The configuration has been updated. " + updateValueMessage;
-                stopTimers();
+                stopUpdateTimers();
 
                 /*
                  * If we're already in the update phase when config was modified.
@@ -359,24 +406,20 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
             if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
                 Tr.debug(tc, updateValueMessage);
             }
+        } else {
+            startupCheckIntervalMilliseconds = HealthCheckConstants.CONFIG_NOT_SET;
         }
     }
 
     @Modified
     protected void modified(ComponentContext context, Map<String, Object> properties) {
+        processConfig();
         /*
-         * During server.xml update, never check for server env.
+         * Only "start" the health check process if we previously have not, and we're not part of a check point scenari
          */
-
-        /*
-         * If system was not valid for health check, skip on checking configuration update. We've already indicated that this system is
-         * not fit for file-based health checks.
-         */
-        if (isValidSystemForFileHealthCheck) {
-            processCheckIntervalConfig((String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_CHECK_INTERVAL));
-            processStartupCheckIntervalConfig((String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_STARTUP_CHECK_INTERVAL));
+        if (isFileHealthCheckingEnabled() && !isHCProcessStarted && CheckpointPhase.getPhase().equals(CheckpointPhase.INACTIVE)) {
+            startFileHealthCheckProcesses();
         }
-
     }
 
     /** {@inheritDoc} */
@@ -388,9 +431,15 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
         isCheckPointFinished = true;
 
         /*
+         * Mostly for an instantOn scenario.
+         */
+        //processConfig();
+
+        /*
          * Last flag in the if is the beta guard
          */
         if (isValidSystemForFileHealthCheck && isFileHealthCheckingEnabled() && ProductInfo.getBetaEdition()) {
+            isHCProcessStarted = true;
 
             File startFile = HealthFileUtils.getStartFile();
 
@@ -403,7 +452,8 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
                 createStartedTimer = new Timer(true);
                 createStartedTimer.schedule(new StartedFileCreateProcess(), 0, getStartupCheckInterval());
                 if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
-                    Tr.debug(tc, "Initiated startup phase for local health check funcitonality. Querying for first succesful startup status.");
+                    Tr.debug(tc, "Initiated startup phase for local health check funcitonality. Querying for first succesful startup status. Using startupCheckInterval "
+                                 + startupCheckIntervalMilliseconds);
                 }
             } else {
 
@@ -418,6 +468,81 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
                     Tr.warning(tc, "file.healthcheck.system.inconsistency.CWMMH0107W");
                 }
             }
+        }
+    }
+
+    /*
+     * ReProcess config, right before starting health check process.
+     * For instantOn.
+     */
+    public void processConfig() {
+        /*
+         * Beta guard
+         */
+        if (ProductInfo.getBetaEdition()) {
+            //resolve checkInterval config
+
+            Map<String, Object> properties = (Map<String, Object>) compContext.getProperties();
+
+            String serverCheckIntervalConfig;
+            if ((serverCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_CHECK_INTERVAL)) != null) {
+                processCheckIntervalConfig(serverCheckIntervalConfig);
+            } else {
+                processCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_CHECK_INTERVAL));
+            }
+
+            //resolve startupCheckInterval config
+            String serverStartupCheckIntervalConfig;
+            if ((serverStartupCheckIntervalConfig = (String) properties.get(HealthCheckConstants.HEALTH_SERVER_CONFIG_STARTUP_CHECK_INTERVAL)) != null) {
+                processStartupCheckIntervalConfig(serverStartupCheckIntervalConfig);
+            } else {
+                processStartupCheckIntervalConfig(System.getenv(HealthCheckConstants.HEALTH_ENV_CONFIG_STARTUP_CHECK_INTERVAL));
+            }
+
+            /*
+             * Should be a first time check, i.e. if isValidSystemForFIleHealthCheck is false.
+             */
+            if (isFileHealthCheckingEnabled() && !isValidSystemForFileHealthCheck) {
+                //Validate system for File Health Checks (i.e., File I/O)
+                try {
+                    isValidSystemForFileHealthCheck = HealthFileUtils.isValidSystem();
+                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                        Tr.debug(tc, "Is system valid for File health check: " + isValidSystemForFileHealthCheck);
+                    }
+                } catch (IOException e) {
+                    //Let FFDC handle this.
+                }
+
+                /*
+                 * Handle special startup case(s)
+                 */
+                if (isValidSystemForFileHealthCheck) {
+
+                    /*
+                     * If there are no applications deployed.
+                     * Kick off the file health check processes.
+                     *
+                     * These will immediately create all three files
+                     * and then continually run the live and ready checks.
+                     * (which will always be UP.. forever.. and ever..).
+                     */
+                    Set<String> apps = validateApplicationSet();
+                    if (apps.size() == 0) {
+                        startFileHealthCheckProcesses();
+                    }
+                }
+
+            }
+            /*
+             * If startupCheckInterval is set (not -1) , but checkInterval is not set. Issue warning.
+             */
+            else if (!isFileHealthCheckingEnabled() && (startupCheckIntervalMilliseconds != HealthCheckConstants.CONFIG_NOT_SET)) {
+
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                    Tr.warning(tc, "startup.check.interval.config.only.set.CWMMH01012W");
+                }
+            }
+
         }
     }
 
@@ -457,7 +582,7 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
             }
 
             if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
-                Tr.debug(tc, "Initiated update phase for local health check funcitonality.");
+                Tr.debug(tc, "Initiated update phase for local health check funcitonality. Using checkInterval " + checkIntervalMilliseconds);
             }
             /*
              * Timers to update the Live and ready files at the fileUpdateIntervalMilliseconds.
@@ -521,7 +646,7 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
             Tr.debug(tc, "HealthCheckServiceImpl is deactivated");
         }
-        stopTimers();
+        stopAllTimeres();
     }
 
     /**
