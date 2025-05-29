@@ -421,7 +421,7 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
          * Only "start" the health check process if we previously have not, and we're not part of a check point scenario
          */
         if (isFileHealthCheckingEnabled() && !isHCProcessStarted && CheckpointPhase.getPhase().equals(CheckpointPhase.INACTIVE)) {
-            startFileHealthCheckProcessesInternal();
+            startFileHealthCheckProcesses();
         }
     }
 
@@ -436,12 +436,10 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
         /*
          * For an instantOn scenario, re-process config including for env var
          */
-        processConfig(true);
-
-        startFileHealthCheckProcessesInternal();
-    }
-
-    public void startFileHealthCheckProcessesInternal() {
+        if (!CheckpointPhase.getPhase().equals(CheckpointPhase.INACTIVE)) {
+            System.out.println("debug: reprocess");
+            processConfig(true);
+        }
 
         /*
          * Last flag in the if is the beta guard
@@ -545,7 +543,7 @@ public class HealthCheck40ServiceImpl implements HealthCheck40Service {
                      */
                     Set<String> apps = validateApplicationSet();
                     if (apps.size() == 0) {
-                        startFileHealthCheckProcessesInternal();
+                        startFileHealthCheckProcesses();
                     }
                 }
 
