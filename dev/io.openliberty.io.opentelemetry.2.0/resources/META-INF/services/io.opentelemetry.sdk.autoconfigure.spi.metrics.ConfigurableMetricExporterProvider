@@ -1,3 +1,5 @@
 io.opentelemetry.exporter.otlp.internal.OtlpMetricExporterProvider
 io.opentelemetry.exporter.logging.internal.LoggingMetricExporterProvider
 io.opentelemetry.exporter.logging.internal.ConsoleMetricExporterProvider
+io.opentelemetry.exporter.CustomMetricExporterProvider
+io.openliberty.microprofile.telemetry20.internal.exporter.MyMetricExporterProvider

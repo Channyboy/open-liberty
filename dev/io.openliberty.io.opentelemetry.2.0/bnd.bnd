@@ -40,7 +40,8 @@ Import-Package: \
 	com.ibm.websphere.ras.annotation,\
 	io.openliberty.microprofile.telemetry.internal.common.resources,\
 	javax.management,\
-	javax.management.openmbean
+	javax.management.openmbean,\
+	io.openliberty.microprofile.telemetry20.internal.exporter
 	
 Export-Package: \
   io.opentelemetry.extension.trace.propagation;version=${openTelemetryVersion};thread-context=true,\
@@ -64,7 +65,8 @@ Export-Package: \
   io.opentelemetry.exporter.otlp;version=${openTelemetryVersion};thread-context=true,\
   io.opentelemetry.exporter.logging;version=${openTelemetryVersion};thread-context=true,\
   io.opentelemetry.semconv;version=${alphaSemconvOpenTelemetryVersion};thread-context=true,\
-  io.opentelemetry.*;version=${openTelemetryVersion};thread-context=true
+  io.opentelemetry.*;version=${openTelemetryVersion};thread-context=true,\
+  io.opentelemetry.exporter;version="1.0";thread-context=true
 
 Include-Resource: \
  META-INF=resources/META-INF
