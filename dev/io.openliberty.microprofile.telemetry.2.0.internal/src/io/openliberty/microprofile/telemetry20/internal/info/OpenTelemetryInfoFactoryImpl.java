@@ -9,11 +9,17 @@
  *******************************************************************************/
 package io.openliberty.microprofile.telemetry20.internal.info;
 
-import java.util.Map;
-import java.util.UUID;
+import java.lang.reflect.Field;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.function.BiFunction;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -23,7 +29,10 @@ import com.ibm.websphere.ras.TraceComponent;
 import io.openliberty.microprofile.telemetry.internal.common.constants.OpenTelemetryConstants;
 import io.openliberty.microprofile.telemetry.internal.common.info.AbstractOpenTelemetryInfoFactory;
 import io.openliberty.microprofile.telemetry.internal.interfaces.OpenTelemetryInfoFactory;
+import io.openliberty.microprofile.telemetry20.internal.ssl.MySSLContextProvider;
+import io.openliberty.microprofile.telemetry20.internal.ssl.MyX509TrustManager;
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter;
 import io.opentelemetry.instrumentation.resources.HostResource;
 import io.opentelemetry.instrumentation.resources.OsResource;
 import io.opentelemetry.instrumentation.resources.ProcessResource;
@@ -46,6 +55,90 @@ import io.opentelemetry.sdk.resources.ResourceBuilder;
 @Component(service = { OpenTelemetryInfoFactory.class }, property = { "service.vendor=IBM", "service.ranking:Integer=1500" })
 public class OpenTelemetryInfoFactoryImpl extends AbstractOpenTelemetryInfoFactory {
 
+    static long startMilli = System.currentTimeMillis();
+
+    static Timer myTimer = new Timer();
+    static OtlpGrpcMetricExporter myexporter = null;
+    static OtlpGrpcMetricExporter updatedExporter = null;
+
+    static Object updatedExporterDelegate = null;
+
+    public static void setExporter(OtlpGrpcMetricExporter exp) {
+        myexporter = exp;
+    }
+
+    public static void setUpdatedExporter(OtlpGrpcMetricExporter exp) {
+        updatedExporter = exp;
+        try {
+            updatedExporterDelegate = getDelegate(updatedExporter);
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /***********
+     *
+     * Thew SSLCOntext wrapper stuff
+     */
+
+    static MySSLContextProvider daSSLContextProvider = null;
+    static MyX509TrustManager daTrustManager = null;
+
+    static SSLContext newSSLContextToSwapWith = null;
+    static X509TrustManager newtrustManagerSwapWith = null;
+
+    static String alias = null;
+
+    public static void setX509TrustManager(MyX509TrustManager inc) {
+        daTrustManager = inc;
+    }
+
+    public static void setNewTrustmanagerSwapWith(X509TrustManager inc) {
+        newtrustManagerSwapWith = inc;
+    }
+
+    public static void setNewAlias(String inc) {
+        alias = inc;
+    }
+
+    public static void setSSLContextProvider(MySSLContextProvider inc) {
+        daSSLContextProvider = inc;
+    }
+
+    public static void setNewSSLCOntextSwapWith(SSLContext inc) {
+        newSSLContextToSwapWith = inc;
+    }
+    ////////////////////////////////////////////////
+
+    static Object getDelegate(OtlpGrpcMetricExporter g) throws IllegalArgumentException, IllegalAccessException {
+        Object obj = null;
+        for (Field f : g.getClass().getDeclaredFields()) {
+            //System.out.println("f name " + f.getName());
+            if (f.getName().equalsIgnoreCase("delegate")) {
+                System.out.println("getting delegate ?");
+                f.setAccessible(true);
+                obj = f.get(g);
+            }
+        }
+        return obj;
+    }
+
+    static void updateDelegate(OtlpGrpcMetricExporter g, Object delegate) {
+        for (Field f : g.getClass().getDeclaredFields()) {
+            //System.out.println("f name " + f.getName());
+            if (f.getName().equalsIgnoreCase("delegate")) {
+                System.out.println("updateing delegate ?");
+                f.setAccessible(true);
+                try {
+                    f.set(g, delegate);
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     private static final TraceComponent tc = Tr.register(OpenTelemetryInfoFactoryImpl.class);
 
     private static final String DISABLED_RESOURCE_PROVIDERS = "otel.java.disabled.resource.providers";
@@ -59,6 +152,31 @@ public class OpenTelemetryInfoFactoryImpl extends AbstractOpenTelemetryInfoFacto
     @Override
     public OpenTelemetry buildOpenTelemetry(Map<String, String> openTelemetryProperties,
                                             BiFunction<? super Resource, ConfigProperties, ? extends Resource> resourceCustomiser, ClassLoader classLoader) {
+
+        // System.out.println("\n hello ---------");
+        // System.out.println(openTelemetryProperties);
+
+//Old code for hotswapping the delegate in the exporter via reflection
+//        myTimer.schedule(new TimerTask() {
+//
+//            @Override
+//            public void run() {
+//                System.out.println("updating SSL");
+//                updateDelegate(myexporter, updatedExporterDelegate);
+//            }
+//        }, 10000);
+
+        ///Code for swapping delegates via sslcontext(Provider) wrapper and x509 trustmanager wrapper
+        myTimer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                System.out.println("updating wrappers");
+                daSSLContextProvider.swapAlias(alias);
+                daSSLContextProvider.swapDelegate(newSSLContextToSwapWith);
+                daTrustManager.swapDelegate(newtrustManagerSwapWith);
+            }
+        }, 10000);
 
         OpenTelemetrySdk openTelemetry = AutoConfiguredOpenTelemetrySdk.builder()
                         .addPropertiesCustomizer(x -> openTelemetryProperties) //Overrides OpenTelemetry's property order
@@ -78,16 +196,16 @@ public class OpenTelemetryInfoFactoryImpl extends AbstractOpenTelemetryInfoFacto
         //Resource providers can be disabled with otel.java.disabled.resource.providers
         Set<String> disabledProviders = new HashSet<>(c.getList(DISABLED_RESOURCE_PROVIDERS));
 
-        if(!disabledProviders.contains(OS_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(OS_RESOURCE_PROVIDER)) {
             builder.putAll(OsResource.get());
         }
-        if(!disabledProviders.contains(HOST_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(HOST_RESOURCE_PROVIDER)) {
             builder.putAll(HostResource.get());
         }
-        if(!disabledProviders.contains(PROCESS_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(PROCESS_RESOURCE_PROVIDER)) {
             builder.putAll(ProcessResource.get());
         }
-        if(!disabledProviders.contains(PROCESS_RUNTIME_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(PROCESS_RUNTIME_RESOURCE_PROVIDER)) {
             builder.putAll(ProcessRuntimeResource.get());
         }
         return builder;
