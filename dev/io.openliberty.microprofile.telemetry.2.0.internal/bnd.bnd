@@ -86,6 +86,7 @@ DynamicImport-Package: \
 	io.openliberty.http.monitor,\
 	io.opentelemetry.instrumentation:opentelemetry-resources;version='2.1.0.alpha',\
 	com.ibm.ws.connectionpool.monitor,\
-	com.ibm.ws.kernel.service
+	com.ibm.ws.kernel.service,\
+	com.ibm.ws.ssl
 
 WS-TraceGroup: TELEMETRY
