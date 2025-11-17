@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
@@ -14,13 +14,16 @@
 package com.ibm.websphere.ssl;
 
 import java.net.URLStreamHandler;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
@@ -30,6 +33,7 @@ import com.ibm.ws.ssl.JSSEProviderFactory;
 import com.ibm.ws.ssl.config.SSLConfigManager;
 import com.ibm.ws.ssl.config.ThreadManager;
 import com.ibm.ws.ssl.core.TraceNLSHelper;
+import com.ibm.ws.ssl.provider.AbstractJSSEProvider;
 
 /**
  * <p>
@@ -435,7 +439,7 @@ public class JSSEHelper {
      * </p>
      *
      * @param connectionInfo - contains information about the connection direction, host, port, etc.
-     * @param props - the SSL properties
+     * @param props          - the SSL properties
      * @return SSLContext
      * @throws com.ibm.websphere.ssl.SSLException
      * @ibm-api
@@ -552,22 +556,22 @@ public class JSSEHelper {
      * </p>
      *
      * @param connectionInfo - This refers to the remote connection information. The
-     *            current properties known by the runtime include:
-     *            <p>
-     *            Example OUTBOUND case (endpoint refers more to protocol used since
-     *            outbound names are not well-known):
-     *            <ul>
-     *            <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
-     *            <li>com.ibm.ssl.remotePort="9809"</li>
-     *            <li>com.ibm.ssl.direction="outbound"</li>
-     *            </ul></p>
-     *            <p>
-     *            Example INBOUND case (endpoint name matches serverindex endpoint):
-     *            <code>
-     *            com.ibm.ssl.direction="inbound"
-     *            </code></p>
-     *            It's highly recommended to supply these properties when possible.
-     * @param props Properties used to configure the SSL socket factory. See {@link Constants} for valid properties.
+     *                           current properties known by the runtime include:
+     *                           <p>
+     *                           Example OUTBOUND case (endpoint refers more to protocol used since
+     *                           outbound names are not well-known):
+     *                           <ul>
+     *                           <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
+     *                           <li>com.ibm.ssl.remotePort="9809"</li>
+     *                           <li>com.ibm.ssl.direction="outbound"</li>
+     *                           </ul></p>
+     *                           <p>
+     *                           Example INBOUND case (endpoint name matches serverindex endpoint):
+     *                           <code>
+     *                           com.ibm.ssl.direction="inbound"
+     *                           </code></p>
+     *                           It's highly recommended to supply these properties when possible.
+     * @param props          Properties used to configure the SSL socket factory. See {@link Constants} for valid properties.
      * @return SSLSocketFactory
      * @throws com.ibm.websphere.ssl.SSLException
      * @ibm-api
@@ -628,34 +632,34 @@ public class JSSEHelper {
      * WebSphereRuntimePermission "getSSLConfig" to be granted.
      * </p>
      *
-     * @param sslAliasName - Used in direct selection. The alias name of a
-     *            specific SSL configuration (optional). You can pass in "null" here.
-     *            If sslAliasName is provided but does not exist it will check
-     *            connection information for a match. Then look for a default if no
-     *            match with the connection information.
+     * @param sslAliasName   - Used in direct selection. The alias name of a
+     *                           specific SSL configuration (optional). You can pass in "null" here.
+     *                           If sslAliasName is provided but does not exist it will check
+     *                           connection information for a match. Then look for a default if no
+     *                           match with the connection information.
      * @param connectionInfo - This refers to the remote connection information. The
-     *            current properties known by the runtime include:
-     *            <p>
-     *            Example OUTBOUND case (endpoint refers more to protocol used since
-     *            outbound names are not well-known):
-     *            <ul>
-     *            <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
-     *            <li>com.ibm.ssl.remotePort="9809"</li>
-     *            <li>com.ibm.ssl.direction="outbound"</li>
-     *            </ul></p>
-     *            <p>
-     *            Example INBOUND case (endpoint name matches serverindex endpoint):
-     *            <code>
-     *            com.ibm.ssl.direction="inbound"
-     *            </code></p>
-     *            It's highly recommended to supply these properties when possible.
-     * @param listener - This is used to notify the
-     *            caller of this API that the SSL configuration changed in the runtime.
-     *            It's up to the caller to decide if they want to call this API again
-     *            to get the new SSLContext for the configuration. Passing in NULL
-     *            indicates no notification is desired. See the
-     *            com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
-     *            information.
+     *                           current properties known by the runtime include:
+     *                           <p>
+     *                           Example OUTBOUND case (endpoint refers more to protocol used since
+     *                           outbound names are not well-known):
+     *                           <ul>
+     *                           <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
+     *                           <li>com.ibm.ssl.remotePort="9809"</li>
+     *                           <li>com.ibm.ssl.direction="outbound"</li>
+     *                           </ul></p>
+     *                           <p>
+     *                           Example INBOUND case (endpoint name matches serverindex endpoint):
+     *                           <code>
+     *                           com.ibm.ssl.direction="inbound"
+     *                           </code></p>
+     *                           It's highly recommended to supply these properties when possible.
+     * @param listener       - This is used to notify the
+     *                           caller of this API that the SSL configuration changed in the runtime.
+     *                           It's up to the caller to decide if they want to call this API again
+     *                           to get the new SSLContext for the configuration. Passing in NULL
+     *                           indicates no notification is desired. See the
+     *                           com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
+     *                           information.
      * @return SSLContext
      * @throws com.ibm.websphere.ssl.SSLException
      * @ibm-api
@@ -664,36 +668,105 @@ public class JSSEHelper {
         return getSSLContext(sslAliasName, connectionInfo, listener, true);
     }
 
+    public Object[] getSSLContext2(String sslAliasName, Map<String, Object> connectionInfo,
+                                   SSLConfigChangeListener listener, boolean tryDefault) throws SSLException, SSLConfigurationNotAvailableException {
+        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+            Tr.entry(tc, "getSSLContext", new Object[] { sslAliasName, connectionInfo, listener });
+
+        Object[] pair = new Object[2];
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                Tr.debug(tc, "Performing Java 2 Security Permission Check ...");
+                Tr.debug(tc, "Expecting : " + GET_SSLCONFIG.toString());
+            }
+            sm.checkPermission(GET_SSLCONFIG);
+        }
+
+        try {
+            SSLConfig props = (SSLConfig) getProperties(sslAliasName, connectionInfo, listener, tryDefault);
+
+            if (props != null) {
+                /*
+                 * ORIGINAL CODE BLOC
+                 * String contextProvider = props.getProperty(Constants.SSLPROP_CONTEXT_PROVIDER);
+                 * SSLContext context = JSSEProviderFactory.getInstance(contextProvider).getSSLContext(connectionInfo, props);
+                 */
+
+                //This is the above, split up so that we can obtain JSSEProvider
+                String contextProvider = props.getProperty(Constants.SSLPROP_CONTEXT_PROVIDER);
+                JSSEProvider jsseProv = JSSEProviderFactory.getInstance(contextProvider);
+                SSLContext context = jsseProv.getSSLContext(connectionInfo, props);
+
+                //Modified getWSTrustManger to be public - obtains List of  Trustmanger. Should only be one item... or hte first tiem.
+                List<TrustManager> trustMgrs = new ArrayList<TrustManager>();
+                ((AbstractJSSEProvider) jsseProv).getWSTrustmanager(trustMgrs, connectionInfo, props);
+
+                System.out.println("DOES THIS WORK?!?!? -  " + trustMgrs.toString());
+                TrustManager[] trustManagers = trustMgrs.toArray(new TrustManager[trustMgrs.size()]);
+                pair[0] = context;
+                pair[1] = trustManagers[0];
+
+                //X509TrustManager tm = jsseProv.getTrustManager();
+
+                if (context != null) {
+                    if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+                        Tr.exit(tc, "getSSLContext");
+                    return pair;
+                }
+                throw new SSLException("SSLContext could not be created from specified SSL properties.");
+            }
+            // If we get here, the requested configuration is not available.
+            // Either:
+            // 1. The config is NOT valid and will never be there (not defined)
+            // 2. The config has not been processed YET
+            // We guard on tryDefault here to ensure we don't regress existing behaviour
+            if (tryDefault) {
+                throw new SSLException("SSLContext could not be created due to null SSL properties.");
+            } else {
+                throw new SSLConfigurationNotAvailableException("SSLContext could not be created for alias '" + sslAliasName + "', the configuration is not present.");
+            }
+        } catch (SSLConfigurationNotAvailableException e) {
+            throw e;
+        } catch (Exception e) {
+            FFDCFilter.processException(e, getClass().getName(), "getSSLContext (2)", this);
+            if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+                Tr.exit(tc, "The following exception occurred in getSSLContext().", new Object[] { e });
+            throw asSSLException(e);
+        }
+    }
+
     /**
      * Like {@link #getSSLContext(String, Map, SSLConfigChangeListener)},
      * failing over to the default configuration is a choice.
      *
-     * @param sslAliasName - Used in direct selection. The alias name of a
-     *            specific SSL configuration (optional). You can pass in "null" here.
+     * @param sslAliasName   - Used in direct selection. The alias name of a
+     *                           specific SSL configuration (optional). You can pass in "null" here.
      * @param connectionInfo - This refers to the remote connection information. The
-     *            current properties known by the runtime include:
-     *            <p>
-     *            Example OUTBOUND case (endpoint refers more to protocol used since
-     *            outbound names are not well-known):
-     *            <ul>
-     *            <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
-     *            <li>com.ibm.ssl.remotePort="9809"</li>
-     *            <li>com.ibm.ssl.direction="outbound"</li>
-     *            </ul></p>
-     *            <p>
-     *            Example INBOUND case (endpoint name matches serverindex endpoint):
-     *            <code>
-     *            com.ibm.ssl.direction="inbound"
-     *            </code></p>
-     *            It's highly recommended to supply these properties when possible.
-     * @param listener - This is used to notify the
-     *            caller of this API that the SSL configuration changed in the runtime.
-     *            It's up to the caller to decide if they want to call this API again
-     *            to get the new SSLContext for the configuration. Passing in NULL
-     *            indicates no notification is desired. See the
-     *            com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
-     *            information.
-     * @param tryDefault if the specified alias is not available, {@code true} indicates the default configuration should be tried.
+     *                           current properties known by the runtime include:
+     *                           <p>
+     *                           Example OUTBOUND case (endpoint refers more to protocol used since
+     *                           outbound names are not well-known):
+     *                           <ul>
+     *                           <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
+     *                           <li>com.ibm.ssl.remotePort="9809"</li>
+     *                           <li>com.ibm.ssl.direction="outbound"</li>
+     *                           </ul></p>
+     *                           <p>
+     *                           Example INBOUND case (endpoint name matches serverindex endpoint):
+     *                           <code>
+     *                           com.ibm.ssl.direction="inbound"
+     *                           </code></p>
+     *                           It's highly recommended to supply these properties when possible.
+     * @param listener       - This is used to notify the
+     *                           caller of this API that the SSL configuration changed in the runtime.
+     *                           It's up to the caller to decide if they want to call this API again
+     *                           to get the new SSLContext for the configuration. Passing in NULL
+     *                           indicates no notification is desired. See the
+     *                           com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
+     *                           information.
+     * @param tryDefault     if the specified alias is not available, {@code true} indicates the default configuration should be tried.
      * @return
      * @throws SSLException
      */
@@ -812,29 +885,29 @@ public class JSSEHelper {
      * WebSphereRuntimePermission "getSSLConfig" to be granted.
      * </p>
      *
-     * @param sslAliasName - Used in direct selection. The alias name of a
-     *            specific SSL configuration (optional). You can pass in "null" here.
-     *            If sslAliasName is provided but does not exist it will check
-     *            connection information for a match. Then look for a default if no
-     *            match with the connection information.
+     * @param sslAliasName   - Used in direct selection. The alias name of a
+     *                           specific SSL configuration (optional). You can pass in "null" here.
+     *                           If sslAliasName is provided but does not exist it will check
+     *                           connection information for a match. Then look for a default if no
+     *                           match with the connection information.
      * @param connectionInfo - This refers to the remote connection information. The
-     *            current properties known by the runtime include:
-     *            <p>
-     *            Example OUTBOUND case (endpoint refers more to protocol used since
-     *            outbound names are not well-known):
-     *            <ul>
-     *            <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
-     *            <li>com.ibm.ssl.remotePort="9809"</li>
-     *            <li>com.ibm.ssl.direction="outbound"</li>
-     *            </ul></p>
-     *            It's highly recommended to supply these properties when possible.
-     * @param listener - This is used to notify the
-     *            caller of this API that the SSL configuration changed in the runtime.
-     *            It's up to the caller to decide if they want to call this API again
-     *            to get the new SSLContext for the configuration. Passing in NULL
-     *            indicates no notification is desired. See the
-     *            com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
-     *            information.
+     *                           current properties known by the runtime include:
+     *                           <p>
+     *                           Example OUTBOUND case (endpoint refers more to protocol used since
+     *                           outbound names are not well-known):
+     *                           <ul>
+     *                           <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
+     *                           <li>com.ibm.ssl.remotePort="9809"</li>
+     *                           <li>com.ibm.ssl.direction="outbound"</li>
+     *                           </ul></p>
+     *                           It's highly recommended to supply these properties when possible.
+     * @param listener       - This is used to notify the
+     *                           caller of this API that the SSL configuration changed in the runtime.
+     *                           It's up to the caller to decide if they want to call this API again
+     *                           to get the new SSLContext for the configuration. Passing in NULL
+     *                           indicates no notification is desired. See the
+     *                           com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
+     *                           information.
      * @return SSLSocketFactory
      * @throws com.ibm.websphere.ssl.SSLException
      * @ibm-api
@@ -893,26 +966,26 @@ public class JSSEHelper {
      * WebSphereRuntimePermission "getSSLConfig" to be granted.
      * </p>
      *
-     * @param sslAliasName - Used in direct selection. The alias name of a
-     *            specific SSL configuration (optional). You can pass in "null" here.
-     *            If sslAliasName is provided but does not exist it will check
-     *            connection information for a match. Then look for a default if no
-     *            match with the connection information.
+     * @param sslAliasName   - Used in direct selection. The alias name of a
+     *                           specific SSL configuration (optional). You can pass in "null" here.
+     *                           If sslAliasName is provided but does not exist it will check
+     *                           connection information for a match. Then look for a default if no
+     *                           match with the connection information.
      * @param connectionInfo - This refers to the remote connection information. The
-     *            current properties known by the runtime include:
-     *            <p>
-     *            Example INBOUND case (endpoint name matches serverindex endpoint):
-     *            <code>
-     *            com.ibm.ssl.direction="inbound"
-     *            </code></p>
-     *            It's highly recommended to supply these properties when possible.
-     * @param listener - This is used to notify the
-     *            caller of this API that the SSL configuration changed in the runtime.
-     *            It's up to the caller to decide if they want to call this API again
-     *            to get the new SSLContext for the configuration. Passing in NULL
-     *            indicates no notification is desired. See the
-     *            com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
-     *            information.
+     *                           current properties known by the runtime include:
+     *                           <p>
+     *                           Example INBOUND case (endpoint name matches serverindex endpoint):
+     *                           <code>
+     *                           com.ibm.ssl.direction="inbound"
+     *                           </code></p>
+     *                           It's highly recommended to supply these properties when possible.
+     * @param listener       - This is used to notify the
+     *                           caller of this API that the SSL configuration changed in the runtime.
+     *                           It's up to the caller to decide if they want to call this API again
+     *                           to get the new SSLContext for the configuration. Passing in NULL
+     *                           indicates no notification is desired. See the
+     *                           com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
+     *                           information.
      * @return SSLServerSocketFactory
      * @throws com.ibm.websphere.ssl.SSLException
      * @ibm-api
@@ -963,34 +1036,34 @@ public class JSSEHelper {
      * WebSphereRuntimePermission "getSSLConfig" to be granted.
      * </p>
      *
-     * @param sslAliasName - Used in direct selection. The alias name of a
-     *            specific SSL configuration (optional). You can pass in "null" here.
-     *            If sslAliasName is provided but does not exist it will check
-     *            connection information for a match. Then look for a default if no
-     *            match with the connection information.
+     * @param sslAliasName   - Used in direct selection. The alias name of a
+     *                           specific SSL configuration (optional). You can pass in "null" here.
+     *                           If sslAliasName is provided but does not exist it will check
+     *                           connection information for a match. Then look for a default if no
+     *                           match with the connection information.
      * @param connectionInfo - This refers to the remote connection information. The
-     *            current properties known by the runtime include:
-     *            <p>
-     *            Example OUTBOUND case (endpoint refers more to protocol used since
-     *            outbound names are not well-known):
-     *            <ul>
-     *            <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
-     *            <li>com.ibm.ssl.remotePort="9809"</li>
-     *            <li>com.ibm.ssl.direction="outbound"</li>
-     *            </ul></p>
-     *            <p>
-     *            Example INBOUND case (endpoint name matches serverindex endpoint):
-     *            <code>
-     *            com.ibm.ssl.direction="inbound"
-     *            </code></p>
-     *            It's highly recommended to supply these properties when possible.
-     * @param listener - This is used to notify the
-     *            caller of this API that the SSL configuration changed in the runtime.
-     *            It's up to the caller to decide if they want to call this API again
-     *            to get the new SSLContext for the configuration. Passing in NULL
-     *            indicates no notification is desired. See the
-     *            com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
-     *            information.
+     *                           current properties known by the runtime include:
+     *                           <p>
+     *                           Example OUTBOUND case (endpoint refers more to protocol used since
+     *                           outbound names are not well-known):
+     *                           <ul>
+     *                           <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
+     *                           <li>com.ibm.ssl.remotePort="9809"</li>
+     *                           <li>com.ibm.ssl.direction="outbound"</li>
+     *                           </ul></p>
+     *                           <p>
+     *                           Example INBOUND case (endpoint name matches serverindex endpoint):
+     *                           <code>
+     *                           com.ibm.ssl.direction="inbound"
+     *                           </code></p>
+     *                           It's highly recommended to supply these properties when possible.
+     * @param listener       - This is used to notify the
+     *                           caller of this API that the SSL configuration changed in the runtime.
+     *                           It's up to the caller to decide if they want to call this API again
+     *                           to get the new SSLContext for the configuration. Passing in NULL
+     *                           indicates no notification is desired. See the
+     *                           com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
+     *                           information.
      * @return Properties for the requested sslAliasName.
      *         If the requested sslAliasName is not avialable, the default properties will be returned.
      *         If the default properties are not available, null is returned.
@@ -1006,35 +1079,35 @@ public class JSSEHelper {
      * Like {@link #getProperties(String, Map, SSLConfigChangeListener)},
      * except failing over to the default configuration is a choice.
      *
-     * @param sslAliasName - Used in direct selection. The alias name of a
-     *            specific SSL configuration (optional). You can pass in "null" here.
-     *            If sslAliasName is provided but does not exist it will check
-     *            connection information for a match. Then look for a default if no
-     *            match with the connection information.
+     * @param sslAliasName   - Used in direct selection. The alias name of a
+     *                           specific SSL configuration (optional). You can pass in "null" here.
+     *                           If sslAliasName is provided but does not exist it will check
+     *                           connection information for a match. Then look for a default if no
+     *                           match with the connection information.
      * @param connectionInfo - This refers to the remote connection information. The
-     *            current properties known by the runtime include:
-     *            <p>
-     *            Example OUTBOUND case (endpoint refers more to protocol used since
-     *            outbound names are not well-known):
-     *            <ul>
-     *            <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
-     *            <li>com.ibm.ssl.remotePort="9809"</li>
-     *            <li>com.ibm.ssl.direction="outbound"</li>
-     *            </ul></p>
-     *            <p>
-     *            Example INBOUND case (endpoint name matches serverindex endpoint):
-     *            <code>
-     *            com.ibm.ssl.direction="inbound"
-     *            </code></p>
-     *            It's highly recommended to supply these properties when possible.
-     * @param listener - This is used to notify the
-     *            caller of this API that the SSL configuration changed in the runtime.
-     *            It's up to the caller to decide if they want to call this API again
-     *            to get the new SSLContext for the configuration. Passing in NULL
-     *            indicates no notification is desired. See the
-     *            com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
-     *            information.
-     * @param tryDefault if the specified alias is not available, {@code true} indicates the default configuration should be tried.
+     *                           current properties known by the runtime include:
+     *                           <p>
+     *                           Example OUTBOUND case (endpoint refers more to protocol used since
+     *                           outbound names are not well-known):
+     *                           <ul>
+     *                           <li>com.ibm.ssl.remoteHost="hostname.ibm.com"</li>
+     *                           <li>com.ibm.ssl.remotePort="9809"</li>
+     *                           <li>com.ibm.ssl.direction="outbound"</li>
+     *                           </ul></p>
+     *                           <p>
+     *                           Example INBOUND case (endpoint name matches serverindex endpoint):
+     *                           <code>
+     *                           com.ibm.ssl.direction="inbound"
+     *                           </code></p>
+     *                           It's highly recommended to supply these properties when possible.
+     * @param listener       - This is used to notify the
+     *                           caller of this API that the SSL configuration changed in the runtime.
+     *                           It's up to the caller to decide if they want to call this API again
+     *                           to get the new SSLContext for the configuration. Passing in NULL
+     *                           indicates no notification is desired. See the
+     *                           com.ibm.websphere.ssl.SSLConfigChangeListener interface for more
+     *                           information.
+     * @param tryDefault     if the specified alias is not available, {@code true} indicates the default configuration should be tried.
      * @return Properties for the requested sslAliasName.
      *         If the requested sslAliasName properties are not available, null is returned.
      * @throws SSLException
@@ -1303,7 +1376,7 @@ public class JSSEHelper {
      * </p>
      *
      * @param connectionInfo - This refers to the inbound connection
-     *            information.
+     *                           information.
      *
      * @ibm-api
      **/
@@ -1361,7 +1434,7 @@ public class JSSEHelper {
      * Convenience method to wrap any other exception as an {@link SSLException}.
      *
      * @param e
-     *            The exception to be wrapped or re-thrown.
+     *              The exception to be wrapped or re-thrown.
      * @return the original exception, or a new {@link SSLException} to wrap it
      */
     private static SSLException asSSLException(Exception e) throws SSLException {

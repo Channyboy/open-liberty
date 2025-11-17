@@ -309,13 +309,89 @@ public abstract class AbstractJSSEProvider implements JSSEProvider {
         return libertySSLContext;
     }
 
+    //@Override
+    public SSLContext getSSLContext2(Map<String, Object> connectionInfo, SSLConfig sslConfig) throws Exception {
+        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+            Tr.entry(tc, "getSSLContext", new Object[] { connectionInfo });
+
+        // first try to get the SSLContext from the cache.
+        SSLContext sslContext = sslContextCacheJAVAX.get(sslConfig);
+
+        setOutboundConnectionInfoInternal(connectionInfo);
+
+        if (sslContext != null) {
+            if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+                Tr.exit(tc, "getSSLContext -> (from cache)");
+            return sslContext;
+        }
+
+        String direction = Constants.DIRECTION_OUTBOUND;
+        if (connectionInfo != null) {
+            direction = (String) connectionInfo.get(Constants.CONNECTION_INFO_DIRECTION);
+        }
+
+        // Create the SSL context needed by the JSSE.
+        sslContext = getSSLContextInstance(sslConfig);
+
+        List<KeyManager> keyMgrs = new ArrayList<KeyManager>();
+        List<TrustManager> trustMgrs = new ArrayList<TrustManager>();
+
+        // get Key and trust managers
+        getWSKeyManager(keyMgrs, connectionInfo, sslConfig);
+        getWSTrustmanager(trustMgrs, connectionInfo, sslConfig);
+
+        if (!keyMgrs.isEmpty() && !trustMgrs.isEmpty()) {
+            KeyManager[] keyManagers = keyMgrs.toArray(new KeyManager[keyMgrs.size()]);
+            TrustManager[] trustManagers = trustMgrs.toArray(new TrustManager[trustMgrs.size()]);
+            // use default SecureRandom
+            sslContext.init(keyManagers, trustManagers, null);
+        } else if (keyMgrs.isEmpty() && (direction != null && direction.equals(Constants.DIRECTION_INBOUND))) {
+            String message = TraceNLSHelper.getInstance().getString("ssl.config.error.CWPKI0835E",
+                                                                    "An SSL/TLS configuration cannot be created for inbound connection due to no key manager being created.");
+            throw new SSLException(message);
+        } else if (keyMgrs.isEmpty() && !trustMgrs.isEmpty()) {
+            TrustManager[] trustManagers = trustMgrs.toArray(new TrustManager[trustMgrs.size()]);
+            // use default SecureRandom
+            sslContext.init(null, trustManagers, null);
+        } else {
+            String message = TraceNLSHelper.getInstance().getString("ssl.config.error.CWPKI0836E",
+                                                                    "An SSL/TLS configuration cannot created due to no key and trust managers being created.");
+            throw new SSLException(message);
+        }
+
+        // this may need to be made configurable at some point.
+        if (sslContextCacheJAVAX.size() > 100) {
+            // instead of clearing the entry cache, grab a few to delete
+            Iterator<SSLConfig> keys = sslContextCacheJAVAX.keySet().iterator();
+            SSLConfig[] victims = new SSLConfig[] { keys.next(), keys.next(), keys.next(), keys.next(), keys.next() };
+            // delete the victim entries after using the iterator (not while)
+            for (SSLConfig victim : victims) {
+                sslContextCacheJAVAX.remove(victim);
+            }
+        }
+
+        // wrap the SSLContext with LibertySSLContext to bind our SSL config on the resulting socket
+        // alias will be null if it hasn't been configured
+        LibertySSLContextSpi libertySSLContextSpi = new LibertySSLContextSpi(sslContext, sslConfig.getProperty(Constants.SSLPROP_ALIAS));
+        LibertySSLContext libertySSLContext = new LibertySSLContext(libertySSLContextSpi, sslContext.getProvider(), sslContext.getProtocol());
+
+        sslContextCacheJAVAX.put(sslConfig, libertySSLContext);
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+            Tr.debug(tc, "SSLContext cache size: " + sslContextCacheJAVAX.size());
+
+        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+            Tr.exit(tc, "getSSLContext -> (new)");
+
+        return libertySSLContext;
+    }
+
     /**
      * @param connectionInfo
      * @param sslConfig
      * @return
      * @throws Exception
      */
-    private void getWSTrustmanager(List<TrustManager> tmHolder, Map<String, Object> connectionInfo, SSLConfig sslConfig) throws Exception {
+    public void getWSTrustmanager(List<TrustManager> tmHolder, Map<String, Object> connectionInfo, SSLConfig sslConfig) throws Exception {
 
         if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
             Tr.entry(tc, "getWSTrustmanager", new Object[] { tmHolder, connectionInfo, sslConfig });

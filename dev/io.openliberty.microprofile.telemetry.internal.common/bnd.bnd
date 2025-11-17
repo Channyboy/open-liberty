@@ -75,7 +75,8 @@ Import-Package: \
 	com.ibm.ws.kernel.boot.core,\
 	com.ibm.ws.kernel.boot.common,\
 	io.openliberty.io.opentelemetry.2.1,\
-	com.ibm.ws.kernel.feature
+	com.ibm.ws.kernel.feature,\
+	com.ibm.ws.ssl
 	
 
 WS-TraceGroup: TELEMETRY
