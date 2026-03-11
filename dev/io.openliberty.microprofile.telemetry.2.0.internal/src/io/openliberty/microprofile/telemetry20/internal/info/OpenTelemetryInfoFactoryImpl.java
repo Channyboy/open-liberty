@@ -9,10 +9,10 @@
  *******************************************************************************/
 package io.openliberty.microprofile.telemetry20.internal.info;
 
-import java.util.Map;
-import java.util.UUID;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiFunction;
 
 import org.osgi.service.component.annotations.Component;
@@ -23,6 +23,9 @@ import com.ibm.websphere.ras.TraceComponent;
 import io.openliberty.microprofile.telemetry.internal.common.constants.OpenTelemetryConstants;
 import io.openliberty.microprofile.telemetry.internal.common.info.AbstractOpenTelemetryInfoFactory;
 import io.openliberty.microprofile.telemetry.internal.interfaces.OpenTelemetryInfoFactory;
+import io.openliberty.microprofile.telemetry20.internal.exporters.OpenLibertyLogRecordExporterWrapper;
+import io.openliberty.microprofile.telemetry20.internal.exporters.OpenLibertyMetricsExporterWrapper;
+import io.openliberty.microprofile.telemetry20.internal.exporters.OpenLibertySpanExporterWrapper;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.resources.HostResource;
 import io.opentelemetry.instrumentation.resources.OsResource;
@@ -36,8 +39,11 @@ import io.opentelemetry.instrumentation.runtimemetrics.java8.Threads;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
 import io.opentelemetry.sdk.autoconfigure.spi.ConfigProperties;
+import io.opentelemetry.sdk.logs.export.LogRecordExporter;
+import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.resources.ResourceBuilder;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 
 /**
  * This class contains version specific configuration for OpenTelemetryInfoFactory
@@ -78,16 +84,16 @@ public class OpenTelemetryInfoFactoryImpl extends AbstractOpenTelemetryInfoFacto
         //Resource providers can be disabled with otel.java.disabled.resource.providers
         Set<String> disabledProviders = new HashSet<>(c.getList(DISABLED_RESOURCE_PROVIDERS));
 
-        if(!disabledProviders.contains(OS_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(OS_RESOURCE_PROVIDER)) {
             builder.putAll(OsResource.get());
         }
-        if(!disabledProviders.contains(HOST_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(HOST_RESOURCE_PROVIDER)) {
             builder.putAll(HostResource.get());
         }
-        if(!disabledProviders.contains(PROCESS_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(PROCESS_RESOURCE_PROVIDER)) {
             builder.putAll(ProcessResource.get());
         }
-        if(!disabledProviders.contains(PROCESS_RUNTIME_RESOURCE_PROVIDER)){
+        if (!disabledProviders.contains(PROCESS_RUNTIME_RESOURCE_PROVIDER)) {
             builder.putAll(ProcessRuntimeResource.get());
         }
         return builder;
@@ -113,4 +119,46 @@ public class OpenTelemetryInfoFactoryImpl extends AbstractOpenTelemetryInfoFacto
             GarbageCollector.registerObservers(openTelemetry);
         }
     }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * The Exporter wrapper stuff
+     *
+     */
+
+    static OpenLibertyMetricsExporterWrapper mygrpcmetricsexporterwarpper = null;
+    static OpenLibertyLogRecordExporterWrapper mygrpclogsexporterwarpper = null;
+    static OpenLibertySpanExporterWrapper mygrpcspanesexporterwarpper = null;
+
+    public static void setMetricsExporterWrapper(OpenLibertyMetricsExporterWrapper wrapper) {
+        mygrpcmetricsexporterwarpper = wrapper;
+    }
+
+    public static void setLogExporterWrapper(OpenLibertyLogRecordExporterWrapper wrapper) {
+        mygrpclogsexporterwarpper = wrapper;
+    }
+
+    public static void setSpanExporterWrapper(OpenLibertySpanExporterWrapper wrapper) {
+        mygrpcspanesexporterwarpper = wrapper;
+    }
+
+    //actual exporter - one that we want to change to
+    static MetricExporter newMetricsDelegate = null;
+    static LogRecordExporter newLogRecordDelegate = null;
+    static SpanExporter newSpanRecordDelegate = null;
+
+    public static void setNewMetricsExporterDelegate(MetricExporter del) {
+        newMetricsDelegate = del;
+    }
+
+    public static void setNewLogRecordExporterDelegate(LogRecordExporter del) {
+        newLogRecordDelegate = del;
+    }
+
+    public static void setNewSpanExporterDelegate(SpanExporter del) {
+        newSpanRecordDelegate = del;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
 }
