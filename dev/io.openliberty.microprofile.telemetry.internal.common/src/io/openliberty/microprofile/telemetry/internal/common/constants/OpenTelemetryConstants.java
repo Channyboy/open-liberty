@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2024 IBM Corporation and others.
+ * Copyright (c) 2024, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -20,6 +20,8 @@ public class OpenTelemetryConstants {
     public static final String CONFIG_DISABLE_PROPERTY = "otel.sdk.disabled";
     public static final String ENV_METRICS_EXPORTER_PROPERTY = "OTEL_METRICS_EXPORTER";
     public static final String CONFIG_METRICS_EXPORTER_PROPERTY = "otel.metrics.exporter";
+    public static final String ENV_TRACES_EXPORTER_PROPERTY = "OTEL_TRACES_EXPORTER";
+    public static final String CONFIG_TRACES_EXPORTER_PROPERTY = "otel.traces.exporter";
     public static final String ENV_LOGS_EXPORTER_PROPERTY = "OTEL_LOGS_EXPORTER";
     public static final String CONFIG_LOGS_EXPORTER_PROPERTY = "otel.logs.exporter";
     public static final String SERVICE_NAME_PROPERTY = "otel.service.name";
