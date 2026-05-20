@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import org.osgi.service.component.annotations.Reference;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
+import com.ibm.websphere.ssl.Constants;
 import com.ibm.ws.ssl.config.SSLConfigManager;
 
 /**
@@ -68,10 +69,22 @@ public class RepertoireConfigService extends GenericSSLConfigService implements 
             }
         }
         super.modified(id, properties);
+        
+        // Notify listeners that the SSL configuration has changed
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+            Tr.debug(this, tc, "Notifying SSL config change listeners for modification of alias: " + id);
+        }
+        SSLConfigManager.getInstance().notifySSLConfigChangeListener(id, Constants.CONFIG_STATE_CHANGED);
     }
 
     @Deactivate
     protected void deactivate(int reason) {
+        // Notify listeners that the SSL configuration is being deleted
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+            Tr.debug(this, tc, "Notifying SSL config change listeners for deletion of alias: " + id);
+        }
+        SSLConfigManager.getInstance().notifySSLConfigChangeListener(id, Constants.CONFIG_STATE_DELETED);
+        
         SSLConfigManager.getInstance().removeSSLPropertiesFromMap(id, true);
         super.deactivate(id, reason);
     }
