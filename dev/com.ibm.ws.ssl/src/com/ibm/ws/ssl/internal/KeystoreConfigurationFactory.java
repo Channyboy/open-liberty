@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2023 IBM Corporation and others.
+ * Copyright (c) 2012, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -210,6 +210,16 @@ public class KeystoreConfigurationFactory implements ManagedServiceFactory, File
                 com.ibm.ws.ssl.provider.AbstractJSSEProvider.removeEntryFromSSLContextMap(keyStorePath);
                 com.ibm.ws.ssl.config.SSLConfigManager.getInstance().resetDefaultSSLContextIfNeeded(keyStorePath);
 
+                //Update notification for any SSL Config listeners
+                //This an be a KeyStore keystore or TrustStore keystore.
+                WSKeyStore keystore = com.ibm.ws.ssl.config.KeyStoreManager.getInstance().getKeyStoreFromFilePath(keyStorePath);
+                if (keystore == null) {
+                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                        Tr.debug(tc, String.format("The keystore at path [%s] was detected to be modified, but this keystore is not recognized internally", keyStorePath));
+                    }
+                    continue;
+                }
+                com.ibm.ws.ssl.config.SSLConfigManager.getInstance().updateNotifiersOfKeyStoreUpdate(keystore);
             }
             Tr.audit(tc, "ssl.keystore.modified.CWPKI0811I", modifiedFiles.toArray());
         } catch (Exception e) {

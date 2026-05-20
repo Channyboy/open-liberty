@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,6 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import com.ibm.ws.kernel.productinfo.ProductInfo;
 
 import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
@@ -54,7 +52,6 @@ import com.ibm.ws.ssl.JSSEProviderFactory;
 import com.ibm.ws.ssl.internal.LibertyConstants;
 import com.ibm.ws.ssl.provider.AbstractJSSEProvider;
 import com.ibm.wsspi.kernel.service.utils.FrameworkState;
-import com.ibm.websphere.ssl.Constants;
 
 /**
  * Class that reads and controls access to SSL configuration objects. It
@@ -447,7 +444,6 @@ public class SSLConfigManager {
             sslprops.setProperty(Constants.SSLPROP_ENABLED_CIPHERS, enabledCiphers);
         }
 
-
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
             Tr.debug(tc, "Saving SSLConfig." + sslprops.toString());
 
@@ -464,7 +460,7 @@ public class SSLConfigManager {
      */
     private static void logSecurityLevelInfo(String configId) {
         // Skip logging for Liberty's internal defaultSSLConfig
-        if (configId != null 
+        if (configId != null
             && securityLevelWarningLoggedConfigs.add(configId)) {
             Tr.info(tc, "ssl.securitylevel.ignored.CWPKI0838I", configId);
         }
@@ -575,19 +571,18 @@ public class SSLConfigManager {
 
         prop = (String) map.get("securityLevel");
         if (null != prop && !prop.isEmpty()) {
-            
+
             // Get the SSL config ID for per-config logging
             String configId = (String) map.get("id");
 
-            if(prop.equalsIgnoreCase(Constants.SECURITY_LEVEL_HIGH)){
+            if (prop.equalsIgnoreCase(Constants.SECURITY_LEVEL_HIGH)) {
                 // Check for HIGH cipher specifications and issue an info log once per config
                 logSecurityLevelInfo(configId);
-            }
-            else if(prop.equalsIgnoreCase(Constants.SECURITY_LEVEL_MEDIUM) || prop.equalsIgnoreCase(Constants.SECURITY_LEVEL_LOW)){
+            } else if (prop.equalsIgnoreCase(Constants.SECURITY_LEVEL_MEDIUM) || prop.equalsIgnoreCase(Constants.SECURITY_LEVEL_LOW)) {
                 // Check for LOW or MEDIUM cipher specifications and issue warning once per config
                 weakCipherLogging(configId);
             }
-            
+
         }
 
         prop = (String) map.get("clientKeyAlias");
@@ -608,7 +603,7 @@ public class SSLConfigManager {
 
         prop = (String) map.get("enabledCiphers");
         if (null != prop && !prop.isEmpty()) {
-            
+
             // Validate that enabledCiphers doesn't mix static entries with filter entries (+/-)
             if (hasMixedCipherConfiguration(prop)) {
                 Tr.error(tc, "ssl.enabledCiphers.mixed.mode.error", prop, alias);
@@ -630,7 +625,7 @@ public class SSLConfigManager {
                     }
                 }
             }
-            
+
         }
 
         if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled()) {
@@ -677,7 +672,6 @@ public class SSLConfigManager {
         if (null != enforceCipherOrder) {
             sslprops.setProperty(Constants.SSLPROP_ENFORCE_CIPHER_ORDER, enforceCipherOrder.toString());
         }
-
 
         if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
             Tr.debug(tc, "Saving SSLConfig: " + sslprops);
@@ -1166,11 +1160,11 @@ public class SSLConfigManager {
         if (enabledCiphers == null || enabledCiphers.isEmpty()) {
             return false;
         }
-        
+
         String[] entries = enabledCiphers.split("[,\\s]+");
         boolean hasStaticEntries = false;
         boolean hasFilterEntries = false;
-        
+
         for (String entry : entries) {
             if (entry.isEmpty()) {
                 continue;
@@ -1180,13 +1174,13 @@ public class SSLConfigManager {
             } else {
                 hasStaticEntries = true;
             }
-            
+
             // Early exit if we've found both types
             if (hasStaticEntries && hasFilterEntries) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -1194,7 +1188,7 @@ public class SSLConfigManager {
      * Common helper method to validate cipher entries based on a predicate.
      *
      * @param enabledCiphers The cipher configuration string
-     * @param isInvalid Predicate to determine if an entry is invalid
+     * @param isInvalid      Predicate to determine if an entry is invalid
      * @return a comma-separated string of invalid entries, or null if none found
      ***/
     private String getInvalidCiphers(String enabledCiphers, Predicate<String> isInvalid) {
@@ -1202,10 +1196,7 @@ public class SSLConfigManager {
             return null;
         }
         String[] entries = enabledCiphers.split("[,\\s]+");
-        String result = Arrays.stream(entries)
-            .filter(entry -> !entry.isEmpty())
-            .filter(isInvalid)
-            .collect(Collectors.joining(", "));
+        String result = Arrays.stream(entries).filter(entry -> !entry.isEmpty()).filter(isInvalid).collect(Collectors.joining(", "));
         return result.isEmpty() ? null : result;
     }
 
@@ -1218,7 +1209,7 @@ public class SSLConfigManager {
      ***/
     private String getInvalidPlusWildcardCiphers(String enabledCiphers) {
         return getInvalidCiphers(enabledCiphers,
-            entry -> entry.startsWith("+") && entry.contains("*"));
+                                 entry -> entry.startsWith("+") && entry.contains("*"));
     }
 
     /***
@@ -1231,7 +1222,7 @@ public class SSLConfigManager {
      ***/
     private String getInvalidStaticWildcardCiphers(String enabledCiphers) {
         return getInvalidCiphers(enabledCiphers,
-            entry -> !entry.startsWith("+") && !entry.startsWith("-") && entry.contains("*"));
+                                 entry -> !entry.startsWith("+") && !entry.startsWith("-") && entry.contains("*"));
     }
 
     /***
@@ -1270,8 +1261,6 @@ public class SSLConfigManager {
             Tr.warning(tc, "ssl.weak.cipher.spec.CWPKI0839W");
         }
     }
-    
-
 
     /***
      * This method masks passwords using asterisks instead of the real characters.
@@ -1438,47 +1427,112 @@ public class SSLConfigManager {
      * @param state
      ***/
     public synchronized void notifySSLConfigChangeListener(String alias, String state) {
-        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled()) {
             Tr.entry(tc, "notifySSLConfigChangeListener", new Object[] { alias, state });
+        }
 
         if (alias != null) {
             List<SSLConfigChangeListener> listenerList = sslConfigListenerMap.get(alias);
 
             if (listenerList != null && listenerList.size() > 0) {
-                SSLConfigChangeListener[] listenerArray = listenerList.toArray(new SSLConfigChangeListener[listenerList.size()]);
 
-                for (int i = 0; i < listenerArray.length; i++) {
+                for (SSLConfigChangeListener listener : listenerList) {
                     SSLConfigChangeEvent event = null;
 
                     // get the event associated with the listener
-                    event = sslConfigListenerEventMap.get(listenerArray[i]);
+                    event = sslConfigListenerEventMap.get(listener);
 
                     if (event != null) {
-                        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
-                            Tr.debug(tc, "Notifying listener[" + i + "]: " + listenerArray[i].getClass().getName());
+                        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                            Tr.debug(tc, "Notifying listener: " + listener.getClass().getName());
+                        }
                         event.setState(state);
                         SSLConfig changedConfig = sslConfigMap.get(alias);
                         event.setChangedSSLConfig(changedConfig);
-                        listenerArray[i].stateChanged(event);
+                        listener.stateChanged(event);
 
                         if (state.equals(Constants.CONFIG_STATE_DELETED)) {
-                            if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+                            if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
                                 Tr.debug(tc, "Deregistering event for listener.");
-                            sslConfigListenerEventMap.remove(listenerArray[i]);
+                            }
+                            sslConfigListenerEventMap.remove(listener);
                         }
                     }
                 }
 
                 if (state.equals(Constants.CONFIG_STATE_DELETED)) {
-                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
                         Tr.debug(tc, "Deregistering all listeners for this alias due to alias deletion.");
+                    }
                     sslConfigListenerMap.remove(alias);
                 }
             }
         }
+    }
 
-        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
-            Tr.exit(tc, "notifySSLConfigChangeListener");
+    /***
+     * This method iterates through all SSL configurations and notifies listeners
+     * when a keystore or truststore has been updated.
+     *
+     * @param wsKeyStore - the WSKeyStore that has been updated
+     ***/
+    public synchronized void updateNotifiersOfKeyStoreUpdate(WSKeyStore wsKeyStore) {
+
+        /*
+         * Not likely to happen. Check anyways.
+         */
+        if (wsKeyStore == null) {
+            if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                Tr.debug(tc, "WSKeyStore parameter is null, returning");
+            }
+            return;
+        }
+
+        // Iterate through each SSL configuration
+        for (Entry<String, SSLConfig> entry : sslConfigMap.entrySet()) {
+            String alias = entry.getKey();
+            SSLConfig config = entry.getValue();
+
+            //Not likely to happen. Check anyways.
+            if (config == null) {
+                continue;
+            }
+
+            // Get the keystore name from the SSL config
+            String keyStoreName = config.getProperty(Constants.SSLPROP_KEY_STORE_NAME);
+            String trustStoreName = config.getProperty(Constants.SSLPROP_TRUST_STORE_NAME);
+
+            boolean matches = false;
+
+            // Check if the keystore matches
+            if (keyStoreName != null) {
+                WSKeyStore configKeyStore = KeyStoreManager.getInstance().getKeyStore(keyStoreName);
+                if (configKeyStore != null && configKeyStore.equals(wsKeyStore)) {
+                    matches = true;
+                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+                        Tr.debug(tc, "Keystore matches for alias: " + alias);
+                }
+            }
+
+            // Check if the truststore matches (only if keystore didn't match or they're different)
+            if (!matches && trustStoreName != null && !keyStoreName.equals(trustStoreName)) {
+                WSKeyStore configTrustStore = KeyStoreManager.getInstance().getKeyStore(trustStoreName);
+                if (configTrustStore != null && configTrustStore.equals(wsKeyStore)) {
+                    matches = true;
+                    if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                        Tr.debug(tc, "Truststore matches for alias: " + alias);
+                    }
+                }
+            }
+
+            // If either keystore or truststore matches, notify the listeners
+            if (matches) {
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                    Tr.debug(tc, "Notifying listeners for SSL config alias: " + alias + " due to KeyStore/TrustStore being modified");
+                }
+                notifySSLConfigChangeListener(alias, Constants.CONFIG_STATE_CHANGED);
+            }
+        }
     }
 
     /***
@@ -1591,10 +1645,10 @@ public class SSLConfigManager {
         String cipherString = props.getProperty(Constants.SSLPROP_ENABLED_CIPHERS);
 
         try {
-            
+
             // Use unified logic: adjustSupportedCiphers handles both custom and modifier modes
             ciphers = Constants.adjustSupportedCiphers(socket.getSupportedCipherSuites(), cipherString);
-            
+
         } catch (Exception e) {
             if (tc.isDebugEnabled())
                 Tr.debug(tc, "Exception setting ciphers in SSL Socket Factory.", new Object[] { e });
@@ -1619,7 +1673,7 @@ public class SSLConfigManager {
         String cipherString = props.getProperty(Constants.SSLPROP_ENABLED_CIPHERS);
 
         try {
-            
+
             // Use unified logic: adjustSupportedCiphers handles both custom and modifier modes
             ciphers = Constants.adjustSupportedCiphers(socket.getSupportedCipherSuites(), cipherString);
         } catch (Exception e) {

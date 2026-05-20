@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2024 IBM Corporation and others.
+ * Copyright (c) 2005, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -675,6 +675,34 @@ public class KeyStoreManager {
                 ws.clearJavaKeyStore();
             }
         }
+    }
+
+    /***
+     * Returns the WSKeyStore from the keyStoreMap that matches the provided file path.
+     *
+     * @param keyStorePath - the file path to the keystore
+     * @return WSKeyStore - the matching WSKeyStore, or null if not found
+     ***/
+    public WSKeyStore getKeyStoreFromFilePath(String keyStorePath) {
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+            Tr.debug(tc, "getKeyStoreFromFilePath ", new Object[] { keyStorePath });
+        }
+
+        for (Entry<String, WSKeyStore> entry : keyStoreMap.entrySet()) {
+            WSKeyStore ws = entry.getValue();
+            if (WSKeyStore.getCannonicalPath(ws.getLocation(), ws.getFileBased()).equals(keyStorePath)) {
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+                    Tr.debug(tc, String.format("Found matching keystore for path: [%s]. The KeyStore is: [%s]", keyStorePath, ws.getName()));
+                }
+                return ws;
+            }
+        }
+
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
+            Tr.debug(tc, "No matching keystore found for path: " + keyStorePath);
+        }
+
+        return null;
     }
 
     /***
