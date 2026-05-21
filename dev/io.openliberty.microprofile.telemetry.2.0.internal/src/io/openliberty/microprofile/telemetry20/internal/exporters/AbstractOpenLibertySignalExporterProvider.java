@@ -190,7 +190,6 @@ public class AbstractOpenLibertySignalExporterProvider {
             String trustMgr = sslConfig.getProperty(Constants.SSLPROP_TRUST_MANAGER);
 
             TrustManagerFactory factory = TrustManagerFactory.getInstance(trustMgr, ctxtProvider);
-            factory.init(null);
             //System.out.println("DDebug: AbstractJSSEProvider: getWSTrustManager: Retrieving the trustmanager from factory " + Arrays.toString(defaultTMArray));
 
             /*
