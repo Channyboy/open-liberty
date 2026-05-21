@@ -44,7 +44,7 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
 
     public OpenLibertyMetricExporterProvider() {
         super("metrics");
-        System.out.println("instantiate!");
+        System.out.println("instantiate OpenLibertyMetricExporterProvider!");
         instance = this;
     }
 
