@@ -58,9 +58,10 @@ public class OpenLibertyLogRecordExporterWrapper implements LogRecordExporter {
     public void updateDelegate(LogRecordExporter newDelegate) {
         rwl.writeLock().lock();
         try {
-            delegate.flush();
-
-            delegate.shutdown();
+            if (delegate != null) {
+                delegate.flush();
+                delegate.shutdown();
+            }
 
             this.delegate = newDelegate;
         } finally {

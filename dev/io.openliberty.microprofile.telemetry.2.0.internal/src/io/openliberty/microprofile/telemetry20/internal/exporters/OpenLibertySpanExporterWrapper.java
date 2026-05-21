@@ -58,9 +58,10 @@ public class OpenLibertySpanExporterWrapper implements SpanExporter {
     public void updateDelegate(SpanExporter newDelegate) {
         rwl.writeLock().lock();
         try {
-            delegate.flush();
-
-            delegate.shutdown();
+            if (delegate != null) {
+                delegate.flush();
+                delegate.shutdown();
+            }
 
             this.delegate = newDelegate;
         } finally {

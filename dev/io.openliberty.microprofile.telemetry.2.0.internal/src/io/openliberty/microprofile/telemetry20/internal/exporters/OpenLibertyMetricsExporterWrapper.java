@@ -28,6 +28,10 @@ public class OpenLibertyMetricsExporterWrapper implements MetricExporter {
     MetricExporter delegate;
 
     public OpenLibertyMetricsExporterWrapper(MetricExporter incDelegate) {
+        if (incDelegate == null) {
+            throw new LibertyOTLPExporterConfigurationExcepton("MetricExporter is null");
+        }
+        System.out.println("OpenLibertyMetricsExporterWrapper - [construct] - using exporter " + incDelegate.hashCode());
         this.delegate = incDelegate;
     }
 
@@ -42,6 +46,7 @@ public class OpenLibertyMetricsExporterWrapper implements MetricExporter {
     public CompletableResultCode export(Collection<MetricData> arg0) {
         rwl.readLock().lock();
         try {
+            System.out.println("OpenLibertyMetricsExporterWrapper - [EXPORT] - " + delegate.hashCode());
             CompletableResultCode crc = delegate.export(arg0);
             return crc;
         } finally {
@@ -68,11 +73,12 @@ public class OpenLibertyMetricsExporterWrapper implements MetricExporter {
 
     public void updateDelegate(MetricExporter newDelegate) {
         rwl.writeLock().lock();
-
+        System.out.println("OpenLibertyMetricsExporterWrapper - [UPDATE] - using exporter " + newDelegate.hashCode());
         try {
-            delegate.flush();
-
-            delegate.shutdown();
+            if (delegate != null) {
+                delegate.flush();
+                delegate.shutdown();
+            }
 
             this.delegate = newDelegate;
         } finally {
