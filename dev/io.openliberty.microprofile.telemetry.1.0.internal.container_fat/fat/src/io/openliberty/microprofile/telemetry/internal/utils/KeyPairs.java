@@ -10,12 +10,24 @@
 package io.openliberty.microprofile.telemetry.internal.utils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStore.TrustedCertificateEntry;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.testcontainers.DockerClientFactory;
+
+import com.ibm.websphere.simplicity.log.Log;
 
 import componenttest.security.utils.SSLUtils;
 import componenttest.topology.impl.LibertyServer;
@@ -35,6 +47,10 @@ public class KeyPairs {
         generateSSLStuff(server);
     }
 
+    public KeyPairs() {
+        foo();
+    }
+
     public static String certificateFilePath() {
         return certificateFile.getAbsolutePath();
     }
@@ -49,7 +65,7 @@ public class KeyPairs {
 
     private static boolean createdSSLStuff = false;
 
-    public synchronized static void generateSSLStuff(LibertyServer server) {    
+    public synchronized static void generateSSLStuff(LibertyServer server) {
         if (createdSSLStuff) {
             return;
         }
@@ -91,8 +107,81 @@ public class KeyPairs {
             SSLUtils.exportCertificateToFile(certificateFile, certificateObject);
             createdSSLStuff = true;
         } catch (Exception e) { //If we get an exception let the test fail and show the developer what went wrong
-            throw new RuntimeException("Exception doing SSLStuff. See the exception message and search output.txt for 'The SLF4J simpleLogger is being configured with a logFile of' to find further logs", e);
+            throw new RuntimeException("Exception doing SSLStuff. See the exception message and search output.txt for 'The SLF4J simpleLogger is being configured with a logFile of' to find further logs",
+                                       e);
         }
+    }
+
+    public void foo() {
+        try {
+            KeyPair generatedKeyPair = SSLUtils.generateKeyPair();
+
+            String mycomputertest = "IBM-PW09KA16.ht.home";
+            String dnName = "O=Evil Inc Test Certificate, OU=tester, CN=" + mycomputertest + ", L=Toronto,C=CA";
+            List<String> genericNameList = new ArrayList<String>();
+            genericNameList.add(mycomputertest);
+            genericNameList.add("localhost");
+            genericNameList.add("127.0.0.1");
+
+            Certificate certificateObject = SSLUtils.selfSign(generatedKeyPair, dnName, genericNameList);
+            String pathToPrivateKey = "";
+            File tempDir = new File("./dadatemporaryKeyPairs");
+            //Key
+
+            if (!tempDir.exists()) {
+                tempDir.mkdirs();
+            }
+            pathToPrivateKey = tempDir.getAbsolutePath() + "/dadaprivate.key";
+
+            privateKeyFile = new File(pathToPrivateKey);
+            Log.info(this.getClass(), "foo", " The path is " + pathToPrivateKey);
+            System.out.println(pathToPrivateKey);
+            SSLUtils.exportPrivateKeyToFile(privateKeyFile, generatedKeyPair);
+
+            //Certificate
+            String pathToCertificate = "";
+
+            if (!tempDir.exists()) {
+                tempDir.mkdirs();
+            }
+            pathToCertificate = tempDir.getAbsolutePath() + "/dadacertificate.crt";
+
+            certificateFile = new File(pathToCertificate);
+            SSLUtils.exportCertificateToFile(certificateFile, certificateObject);
+            createdSSLStuff = true;
+
+            createp12(generatedKeyPair, certificateObject, tempDir);
+
+        } catch (Exception e) { //If we get an exception let the test fail and show the developer what went wrong
+            throw new RuntimeException("Exception doing SSLStuff. See the exception message and search output.txt for 'The SLF4J simpleLogger is being configured with a logFile of' to find further logs",
+                                       e);
+        }
+
+    }
+
+    public void createp12(KeyPair keyPair, Certificate certificate,
+                          File dir) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(null, null);
+
+        //keyStore.
+
+        Certificate[] chain = new Certificate[] { certificate };
+        PrivateKey pk = keyPair.getPrivate();
+
+        KeyStore.PrivateKeyEntry pkEntry = new PrivateKeyEntry(pk, chain);
+
+        KeyStore.TrustedCertificateEntry tcEntry = new TrustedCertificateEntry(certificate);
+
+        //KeyStore.ProtectionParameter = new KeyStore.prote
+        //keyStore.set
+        //keyStore.setEntry(null, pkEntry, new KeyStore.PasswordProtection("asdfgh".toCharArray()));
+        keyStore.setEntry("itskey", pkEntry, new KeyStore.PasswordProtection("asdfgh".toCharArray()));
+//        /keyStore.setEntry("itsCert", pkEntry, null);
+
+        //Setting password for the keystore.
+        keyStore.store(new FileOutputStream(new File(dir + "/my.p12")), "asdfgh".toCharArray());
+
     }
 
 }
