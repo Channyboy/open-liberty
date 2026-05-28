@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="SSL Change Listener Test Server">
+
+    <featureManager>
+        <feature>servlet-3.1</feature>
+        <feature>jaxrs-2.1</feature>
+        <feature>ssl-1.0</feature>
+    </featureManager>
+
+<include optional="true" location="../fatTestPorts.xml"/>
+
+
+    <!-- Enable trace for SSL components -->
+    <logging traceSpecification="SSL=all:SSLChannel=all" />
+
+    <!-- HTTP Endpoint -->
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${bvt.prop.HTTP_default}"
+                  httpsPort="${bvt.prop.HTTP_default.secure}"
+                  host="*" />
+
+    <!-- Default SSL Configuration -->
+    <ssl id="defaultSSLConfig"
+         keyStoreRef="defaultKeyStore"
+         trustDefaultCerts="true" />
+
+    <!-- Test SSL Configuration with direct alias -->
+    <ssl id="testSSLConfig"
+         keyStoreRef="defaultKeyStore"
+         trustDefaultCerts="true" />
+
+    <!-- Another test SSL Configuration with direct alias -->
+    <ssl id="anotherSSLConfig"
+         keyStoreRef="defaultKeyStore"
+         trustDefaultCerts="true" />
+
+    <!-- SSL Configuration with outbound connection for example.com -->
+    <ssl id="exampleComSSLConfig"
+         keyStoreRef="defaultKeyStore"
+         trustDefaultCerts="true">
+        <outboundConnection host="example.com" />
+    </ssl>
+
+    <!-- SSL Configuration with outbound connection for other.com -->
+    <ssl id="otherComSSLConfig"
+         keyStoreRef="defaultKeyStore"
+         trustDefaultCerts="true">
+        <outboundConnection host="other.com" />
+    </ssl>
+
+    <!-- Default KeyStore (automatically created by Liberty) -->
+    <keyStore id="defaultKeyStore"
+              password="Liberty" />
+
+    <!-- Application -->
+    <!--  <webApplication id="sslChangeListener" 
+                    location="sslChangeListener.war" 
+                    name="sslChangeListener">
+        <classloader apiTypeVisibility="ibm-api" />
+    </webApplication> -->
+
+</server>
+
+<!-- Made with Bob -->
