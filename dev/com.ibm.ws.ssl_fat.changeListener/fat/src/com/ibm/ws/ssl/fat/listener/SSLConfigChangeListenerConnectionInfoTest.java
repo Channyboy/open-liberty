@@ -15,12 +15,15 @@ package com.ibm.ws.ssl.fat.listener;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
+import com.ibm.websphere.simplicity.ShrinkHelper.DeployOptions;
 import com.ibm.websphere.simplicity.config.OutboundConnection;
 import com.ibm.websphere.simplicity.config.SSL;
 import com.ibm.websphere.simplicity.config.ServerConfiguration;
@@ -45,9 +48,13 @@ public class SSLConfigChangeListenerConnectionInfoTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        // Deploy the test application
-        ShrinkHelper.defaultApp(server, APP_NAME, "com.ibm.ws.ssl.fat.listener.app");
+        WebArchive testWAR = ShrinkWrap
+                .create(WebArchive.class, APP_NAME+".war")
+                .addPackage(
+                            "com.ibm.ws.ssl.fat.listener.app");
 
+        ShrinkHelper.exportDropinAppToServer(server, testWAR,
+                                     DeployOptions.SERVER_ONLY);
         // Start the server
         server.startServer();
     }

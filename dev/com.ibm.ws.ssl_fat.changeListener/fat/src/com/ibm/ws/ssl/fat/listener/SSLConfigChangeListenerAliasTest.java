@@ -13,13 +13,20 @@
 package com.ibm.ws.ssl.fat.listener;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
+import java.io.File;
+
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.FileAsset;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
+import com.ibm.websphere.simplicity.ShrinkHelper.DeployOptions;
 import com.ibm.websphere.simplicity.config.SSL;
 import com.ibm.websphere.simplicity.config.ServerConfiguration;
 
@@ -43,8 +50,14 @@ public class SSLConfigChangeListenerAliasTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        // Deploy the test application
-        ShrinkHelper.defaultApp(server, APP_NAME, "com.ibm.ws.ssl.fat.listener.app");
+    	
+        WebArchive testWAR = ShrinkWrap
+                .create(WebArchive.class, APP_NAME+".war")
+                .addPackage(
+                            "com.ibm.ws.ssl.fat.listener.app");
+
+        ShrinkHelper.exportDropinAppToServer(server, testWAR,
+                                     DeployOptions.SERVER_ONLY);
 
         // Start the server
         server.startServer();
@@ -141,6 +154,8 @@ public class SSLConfigChangeListenerAliasTest {
         // Ensure that the second notification never does happen (wait 10 seconds)
         assertNull("Second listener should not be notified",
             server.waitForStringInLogUsingMark("SSLConfigChangeListener notification received for alias: " + alias2, 10000));
+        
+        //Maybe TODO: Perhaps use an endpoint that outputs the count of the individual notification
 
         // Cleanup
         HttpUtils.getHttpResponseAsString(server, 

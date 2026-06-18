@@ -15,7 +15,8 @@ bVersion=1.0
 
 src: \
   fat/src,\
-  test-applications/sslChangeListener/src
+  test-applications/sslChangeListener/src,\
+  test-applications/keystoreUpdateListener/src
 
 fat.project: true
 

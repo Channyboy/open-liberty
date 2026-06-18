@@ -23,7 +23,8 @@ import componenttest.rules.repeater.RepeatTests;
 @RunWith(Suite.class)
 @SuiteClasses({
                 SSLConfigChangeListenerAliasTest.class,
-                SSLConfigChangeListenerConnectionInfoTest.class
+                SSLConfigChangeListenerConnectionInfoTest.class,
+                SSLKeystoreUpdateTest.class
 })
 public class FATSuite {
 

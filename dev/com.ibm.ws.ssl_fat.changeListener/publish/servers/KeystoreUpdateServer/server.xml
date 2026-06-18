@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="Keystore Update Test Server">
+
+    <featureManager>
+        <feature>servlet-3.1</feature>
+        <feature>jaxrs-2.1</feature>
+        <feature>ssl-1.0</feature>
+    </featureManager>
+
+	<include optional="true" location="../fatTestPorts.xml"/>
+
+    <!-- Enable trace for SSL components -->
+    <logging traceSpecification="SSL=all:SSLChannel=all" />
+
+    <!-- HTTP Endpoint -->
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${bvt.prop.HTTP_default}"
+                  httpsPort="${bvt.prop.HTTP_default.secure}"
+                  host="*" />
+
+    <!-- Test SSL Configuration with keystore that will be updated -->
+    <ssl id="testSSLConfig"
+         keyStoreRef="testKeyStore" />
+
+    <!-- KeyStore with updateTrigger set to polled for file monitoring -->
+    <!-- The password will be provided by the generated override file in configDropins/overrides -->
+    <keyStore id="testKeyStore"
+              location="${server.config.dir}/resources/security/key.p12"
+              updateTrigger="polled"
+              pollingRate="500ms" />
+</server>
+
+<!-- Made with Bob -->
