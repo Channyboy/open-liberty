@@ -13,7 +13,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.KeyStore;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,11 +25,9 @@ import com.ibm.websphere.ras.Tr;
 import com.ibm.websphere.ras.TraceComponent;
 import com.ibm.websphere.ssl.Constants;
 import com.ibm.websphere.ssl.JSSEHelper;
-import com.ibm.websphere.ssl.JSSEProvider;
 import com.ibm.websphere.ssl.SSLConfig;
 import com.ibm.websphere.ssl.SSLConfigChangeListener;
 import com.ibm.ws.ffdc.annotation.FFDCIgnore;
-import com.ibm.ws.ssl.JSSEProviderFactory;
 
 import io.opentelemetry.sdk.autoconfigure.spi.ConfigProperties;
 
@@ -40,6 +37,8 @@ import io.opentelemetry.sdk.autoconfigure.spi.ConfigProperties;
 public class AbstractOpenLibertySignalExporterProvider {
 
     final String TELEMETRY_SIGNAL;
+
+    protected boolean isRegisteredListener = false;
 
     public AbstractOpenLibertySignalExporterProvider(String signal) {
         TELEMETRY_SIGNAL = signal;
@@ -94,7 +93,7 @@ public class AbstractOpenLibertySignalExporterProvider {
                                                                                  otlpEndpointPropertyValue), e);
             }
 
-            System.out.println("what is this " + url.getProtocol());
+            //System.out.println("what is this " + url.getProtocol());
 
             if (!url.getProtocol().equalsIgnoreCase("https")) {
                 //TODO
@@ -171,48 +170,36 @@ public class AbstractOpenLibertySignalExporterProvider {
         SSLContext sslContext = null;
         X509TrustManager trustManager = null;
         SSLConfig sslConfig;
-        //String alias = null;
-
         try {
 
-            Object[] retPair = jsse.getSSLContext2(null, connectionInfo, changeListener, true);
+            /*
+             * MODIFIED VERSION of GET SSLCONTEXT
+             * RETURNS SSLCONTEXT AND WSTRUSTMANAGER
+             * USING JSSEHELPER
+             */
 
-            //TODO: CURRENTLY using the modified version that returns BOTH SSL context and TRUST
-            // NEED TO: Resolve how to figure out  how to get Trust manager?
+            //TODO: currently using modified getSSLContext2 - can change trustmanager get to public
+            Object[] retPair = jsse.getSSLContext2(null, connectionInfo, null, true);
             sslContext = (SSLContext) retPair[0];
             trustManager = (X509TrustManager) retPair[1];
 
-            // Debug to see what SSL Config we would get with just the connectionInfo we would
+            //DEBUG:  to see what SSL Config we would get with just the connectionInfo we would
             sslConfig = (SSLConfig) jsse.getProperties(null, connectionInfo, null, true);
 
-            //String ctxtProvider = getSSLContextProperty(, sslConfig);
             String ctxtProvider = sslConfig.getProperty(Constants.SSLPROP_CONTEXT_PROVIDER);
             String trustMgr = sslConfig.getProperty(Constants.SSLPROP_TRUST_MANAGER);
 
             TrustManagerFactory factory = TrustManagerFactory.getInstance(trustMgr, ctxtProvider);
             //System.out.println("DDebug: AbstractJSSEProvider: getWSTrustManager: Retrieving the trustmanager from factory " + Arrays.toString(defaultTMArray));
 
-            /*
-             * SSL Context - normally
-             */
+            String alias = sslConfig.getProperty(Constants.SSLPROP_ALIAS);
 
-            JSSEProvider jsseProv = JSSEProviderFactory.getInstance(ctxtProvider);
-            SSLContext context = jsseProv.getSSLContext(connectionInfo, sslConfig);
-
-            //Modified getWSTrustManger to be public - obtains List of  Trustmanger. Should only be one item... or the first time.
-//            List<TrustManager> trustMgrs = new ArrayList<TrustManager>();
-//            ((AbstractJSSEProvider) jsseProv).getWSTrustmanager(trustMgrs, connectionInfo, sslConfig);
-
-            /*
-             * End Experiment
-             */
-
-            // alias = sslConfig.getProperty(Constants.SSLPROP_ALIAS);
-            //System.out.println("@@ DDebug: The alias the SSL component would return is " + alias);
-
-            //Some experimentation stuff: forgot about what... but not really relevant.
-            KeyStore ks = TesterTester.getInstance().getKeyStore("genKeyStore");
-            System.out.println("hello world " + ks.getType());
+            //Registering SSL Listener - for first time.
+            if (!isRegisteredListener) {
+                //System.out.println("David Debug: AbstractOpenLibertySignalExporterProvider -> retrieveSSL -> registering change listner");
+                jsse.registerSSLConfigChangeListener(alias, connectionInfo, changeListener);
+                isRegisteredListener = true;
+            }
 
         } catch (Exception e) {
 
@@ -223,6 +210,10 @@ public class AbstractOpenLibertySignalExporterProvider {
             //Encountered an internal error with the SSL component while attempting to configure a TLS connection
         }
         return new AbstractMap.SimpleEntry<SSLContext, X509TrustManager>(sslContext, trustManager);
+
+    }
+
+    private void registerChangeListener() {
 
     }
 

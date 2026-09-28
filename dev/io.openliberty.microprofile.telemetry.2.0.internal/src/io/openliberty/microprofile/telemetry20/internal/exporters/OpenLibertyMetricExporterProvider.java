@@ -44,7 +44,6 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
 
     public OpenLibertyMetricExporterProvider() {
         super("metrics");
-        System.out.println("instantiate OpenLibertyMetricExporterProvider!");
         instance = this;
     }
 
@@ -128,8 +127,6 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
          */
         validateOTLPEndpointProperty(TELEMETRY_SIGNAL);
 
-        System.out.println("<<<<<<<<  OpenLibertyMetricExporterProvider  >>>>>");
-
         MetricExporter metricExporter = createOTLPExporter();
         wrapper = new OpenLibertyMetricsExporterWrapper(metricExporter);
         return wrapper;
@@ -139,8 +136,7 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
 
         MetricExporter metricExporter = defaultCreateExporterWrapper();
 
-        //TODO: FILL IN SSLCONFIGCHANGELISTENER PARAMATER WHEN SECURITY TEAM SUPPORTS IT.
-        Map.Entry<SSLContext, X509TrustManager> pair = retriveSSLContextAndTrustManager(null);
+        Map.Entry<SSLContext, X509TrustManager> pair = retriveSSLContextAndTrustManager(mynotifier);
 
         if (OtlpGrpcMetricExporter.class.isInstance(metricExporter)) {
             metricExporter = ((OtlpGrpcMetricExporter) metricExporter).toBuilder().setSslContext(pair.getKey(), pair.getValue()).build();
@@ -163,11 +159,9 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
         return "libertyotlp";
     }
 
-    static MyPrivateSSLConfigListener mynotifier = new MyPrivateSSLConfigListener("first");
-    static MyPrivateSSLConfigListener myOtherNotifier = new MyPrivateSSLConfigListener("second");
+    MyPrivateSSLConfigListener mynotifier = new MyPrivateSSLConfigListener("METRICS NOTIFER");
 
-    //POC: TEST
-    static class MyPrivateSSLConfigListener implements SSLConfigChangeListener {
+    class MyPrivateSSLConfigListener implements SSLConfigChangeListener {
 
         String name;
 
@@ -177,9 +171,12 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
 
         @Override
         public void stateChanged(SSLConfigChangeEvent e) {
-            System.out.println(name + " changed: " + e);
+            //EXPERIMENT: reverting to old tech - no updates to exporter just returning;
+            //System.out.println("stateChanged: recieved call to update Metric Exporter - doing nothing and returning;");
+            //return;
 
-            //Do thing with - creating new exporter and swapping with the wrapper.
+            System.out.println("MyPrivateSSLConfigListener has been called back for " + name + "| with change event " + e);
+            doSSlUpdate();
         }
     }
 
