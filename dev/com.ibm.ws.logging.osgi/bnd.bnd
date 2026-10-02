@@ -20,7 +20,8 @@ Bundle-Activator: com.ibm.ws.logging.internal.osgi.Activator
 
 Private-Package: \
     com.ibm.ws.ras.instrument.internal.*,\
-    com.ibm.ws.logging.internal.osgi.*
+    com.ibm.ws.logging.internal.osgi.*,\
+    com.ibm.ws.logging.internal.route.test
  
 Import-Package: \
     org.objectweb.asm.*, \
@@ -57,6 +58,7 @@ instrument.disabled: true
 	com.ibm.websphere.org.osgi.core;version=latest,\
 	com.ibm.websphere.org.osgi.service.cm;version=latest,\
 	com.ibm.websphere.org.osgi.service.component,\
+	com.ibm.wsspi.org.osgi.service.component.annotations;version=latest,\
 	com.ibm.wsspi.org.osgi.service.event;version=latest,\
 	com.ibm.wsspi.org.osgi.service.log;version=latest,\
 	com.ibm.ws.logging;version=latest,\
