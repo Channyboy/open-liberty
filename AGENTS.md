@@ -1,5 +1,13 @@
 # AGENTS.md - Project Context for AI Agents
 
+## Project Wiki
+
+A component wiki is maintained under `.bob/wiki/`. Before starting any task,
+read `.bob/wiki/index.md` and check whether a wiki file exists for the
+component(s) involved. If a relevant file is listed there, read it before
+proceeding to gain additional context. Do not read all wiki files
+speculatively — only those directly relevant to the task at hand.
+
 ## Repository Structure
 
 - `dev/` - Main source code directory for the project
@@ -14,6 +22,11 @@
 ## Common Development Tasks
 
 All of the following commands assume that you have cloned the repository and are in the `open-liberty/dev` directory.
+
+> **Important:** Before running any `assemble`, `releaseNeeded`, or other
+> long-running Gradle build tasks, read `.bob/wiki/gradlebuild.md` for the
+> required command pattern. Using the wrong invocation pattern can cause the
+> tool to cancel prematurely even when the build succeeds.
 
 ### Building the product
 
