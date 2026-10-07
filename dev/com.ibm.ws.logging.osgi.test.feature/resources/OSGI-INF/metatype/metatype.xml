@@ -15,7 +15,7 @@
                    xmlns:ibm="http://www.ibm.com/xmlns/appservers/osgi/metatype/v1.0.0"
                    localization="OSGI-INF/l10n/metatype">
  
-    <OCD name="%logging.test.properties" description="%logging.properties.desc" 
+    <OCD name="%logging.test.properties" description="%logging.test.properties.desc" 
          id="com.ibm.ws.logging.osgi.test.feature" ibm:alias="loggingTest">
     
     

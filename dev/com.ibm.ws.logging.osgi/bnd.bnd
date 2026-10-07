@@ -20,8 +20,7 @@ Bundle-Activator: com.ibm.ws.logging.internal.osgi.Activator
 
 Private-Package: \
     com.ibm.ws.ras.instrument.internal.*,\
-    com.ibm.ws.logging.internal.osgi.*,\
-    com.ibm.ws.logging.internal.route.test
+    com.ibm.ws.logging.internal.osgi.*
  
 Import-Package: \
     org.objectweb.asm.*, \

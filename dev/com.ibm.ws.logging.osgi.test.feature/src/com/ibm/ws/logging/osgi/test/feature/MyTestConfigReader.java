@@ -55,7 +55,7 @@ public class MyTestConfigReader {
     @Activate
     protected void activate(ComponentContext context, Map<String, Object> properties) {
         String routerThing = (String) properties.get("routerThing");
-        System.out.println("[loggingTest] activate - routerThing: " + routerThing);
+        System.out.println("[loggingTest] activate - porps: " + properties);
 
         // 1. Subscribe the handler ID to the desired message ID patterns.
         //    The routing table entry is established before the service is registered

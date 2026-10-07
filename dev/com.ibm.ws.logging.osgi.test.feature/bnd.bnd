@@ -32,7 +32,9 @@ Export-Package: \
     com.ibm.ws.logging.osgi.test.feature
 
 -includeresource: \
-    OSGI-INF=resources/OSGI-INF, \
+    OSGI-INF/metatype=resources/OSGI-INF/metatype, \
+    OSGI-INF/l10n=resources/OSGI-INF/l10n, \
+    OSGI-INF/permissions.perm=resources/OSGI-INF/permissions.perm, \
     WEB-INF=resources/WEB-INF
    
 -dsannotations: \
@@ -41,7 +43,7 @@ Export-Package: \
 	com.ibm.ws.logging.osgi.test.feature.LoggingTestEndpoint
 
 
-
+test.project: true
 instrument.disabled: true
 
 -buildpath: \
@@ -55,7 +57,7 @@ instrument.disabled: true
 	com.ibm.ws.logging;version=latest,\
 	com.ibm.ws.logging.osgi;version=latest,\
 	com.ibm.websphere.rest.handler;version=latest,\
-	com.ibm.ws.rest.handler;version=latest,\
+	com.ibm.ws.rest.handler.jakarta;version=latest,\
 	io.openliberty.jakarta.servlet.6.0;version=latest,\
 	com.ibm.ws.ras.instrument;version=latest,\
 	com.ibm.ws.org.objectweb.asm;version=latest,\

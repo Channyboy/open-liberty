@@ -33,7 +33,6 @@ public class TestWsLogHandler implements WsLogHandler {
     /** {@inheritDoc} */
     @Override
     public void publish(RoutedMessage routedMessage, boolean messageHidden) {
-    	System.out.println("hello riend");
     	String s_prop = System.getProperty("writeToOutput");
     	boolean prop = (s_prop == null) ? false : Boolean.valueOf(s_prop.trim());
     	

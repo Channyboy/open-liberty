@@ -47,14 +47,11 @@ public class MyTestService {
     //private static final String MSG_IDS = "ABCD*,ABCC,CWWKF0011I";
 
 
-
-
     private static final String MSG_IDS_SET2 = "ABCDEE111I,ABCDEE222I,ABCDEE333W,ABCDEE444E,ABCDEE045I,BCDAEE410W,BCGAEE410A,DCCDEE045I,DCCDEE046I,DCCDEE046I,DCCDEE048I,JCCDEE045I";
     
     private static final String MSG_IDS_DEBUG = "ABCDEE333W";
     
     //private static final String MSG_IDS = MSG_IDS_DEBUG;
-    
     
     private static final String MSG_IDS = System.getProperty("output.msg.ids");
     
