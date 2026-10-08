@@ -44,6 +44,7 @@ Export-Package: \
 
 
 test.project: true
+publish.wlp.jar.disabled=false
 instrument.disabled: true
 
 -buildpath: \

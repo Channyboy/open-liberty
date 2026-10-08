@@ -36,7 +36,9 @@ import com.ibm.wsspi.rest.handler.RESTResponse;
     property = {
         "service.vendor=IBM",
         RESTHandler.PROPERTY_REST_HANDLER_CONTEXT_ROOT + "=/loggingTest",
-        RESTHandler.PROPERTY_REST_HANDLER_ROOT + "=/"
+        RESTHandler.PROPERTY_REST_HANDLER_ROOT + "=/",
+        RESTHandler.PROPERTY_REST_HANDLER_ROOT + "=/{sub}",
+        RESTHandler.PROPERTY_REST_HANDLER_ROOT + "=/{sub}/{sub2}"
     }
 )
 public class LoggingTestEndpoint implements RESTHandler {

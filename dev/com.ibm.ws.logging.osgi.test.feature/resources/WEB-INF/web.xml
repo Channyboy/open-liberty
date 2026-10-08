@@ -12,7 +12,7 @@
         IBM Corporation - initial API and implementation
  -->
 <!DOCTYPE web-app>
-<web-app id="LoggingTestREST" version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+<web-app id="LoggingTestREST" version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
   <display-name>LoggingTest</display-name>
   <description>Logging Test REST endpoint for Liberty server</description>
 
