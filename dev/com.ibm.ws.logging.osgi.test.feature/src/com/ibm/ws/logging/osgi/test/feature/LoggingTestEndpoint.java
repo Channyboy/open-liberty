@@ -73,7 +73,8 @@ public class LoggingTestEndpoint implements RESTHandler {
     }
 
     /**
-     * Action 1 (Text/CSV): Emits random messages from comma-separated input.
+     * Action 1 (Text/CSV): Emits all provided messages from comma-separated input
+     * at least once first, followed by random messages up to the requested count.
      */
     private void handleEmitText(RESTRequest request, RESTResponse response) throws IOException {
         String sMsgCount = request.getParameter("count");
@@ -107,7 +108,8 @@ public class LoggingTestEndpoint implements RESTHandler {
     }
 
     /**
-     * Action 1 (JSON): Emits random messages from JSON input.
+     * Action 1 (JSON): Emits all provided messages from JSON input at least once first,
+     * followed by random messages up to the requested count.
      * Expected format: {"count": 100, "messages": ["ABCD1231I Hello", "CWWKF0011I Server started"]}
      */
     private void handleEmitJson(RESTRequest request, RESTResponse response) throws IOException {
@@ -268,9 +270,22 @@ public class LoggingTestEndpoint implements RESTHandler {
         out.println("</body></html>");
     }
 
+    /**
+     * Emits all provided messages at least once to ensure full coverage of all message ID types,
+     * then continues emitting randomly selected messages from the list until the target count is reached.
+     *
+     * @param messages the list of message strings to emit
+     * @param count the total number of messages to emit
+     * @return elapsed time in milliseconds
+     */
     private long emitRandomMessages(List<String> messages, int count) {
         long start = System.currentTimeMillis();
-        for (int i = 0; i < count; i++) {
+        // First emit each message at least once to ensure every message ID type is routed
+        for (String msg : messages) {
+            Tr.info(tc, msg);
+        }
+        // Then randomly emit messages for the remaining count
+        for (int i = messages.size(); i < count; i++) {
             String chosenMsg = messages.get(RANDOM.nextInt(messages.size()));
             Tr.info(tc, chosenMsg);
         }
