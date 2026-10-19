@@ -65,9 +65,7 @@ public class WsLogHandlerInvalidWildcardTest extends WsLogHandlerBaseTest {
         // Multiple asterisks
         "CWK**", "CWK**I", "CW*L*I", "CW*K*", "**",
         // Asterisk misplaced: followed by more than one character
-        "CW*1I", "CWWKF*EFJ",
-        // No prefix before the asterisk
-        "*I"
+        "CW*1I", "CWWKF*EFJ"
     };
 
     /**

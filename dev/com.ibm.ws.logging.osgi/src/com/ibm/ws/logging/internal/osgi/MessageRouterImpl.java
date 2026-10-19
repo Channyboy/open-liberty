@@ -266,8 +266,8 @@ public class MessageRouterImpl implements MessageRouter {
 
             // A wildcard pattern contains exactly one '*' that is either the last character
             // (e.g. "ABCD123*") or the second-to-last character followed by a level letter
-            // (e.g. "ABCD*E").  The literal "*" key (route-all) is handled as a normal
-            // exact-ID entry in msgIdToLogHandlerIds.
+            // (e.g. "ABCD*E" or, with no prefix, "*E").  The literal "*" key (route-all) is
+            // handled as a normal exact-ID entry in msgIdToLogHandlerIds.
             boolean isWildCard = false;
             WildCardMessageAndLevel wcmal = null;
             if (msgId.indexOf('*') != -1 && !msgId.equals("*")) {
@@ -281,7 +281,7 @@ public class MessageRouterImpl implements MessageRouter {
                 }
                 
 
-                if (count == 1 && lastStar > 0 && (lastStar == msgId.length() - 1 || lastStar == msgId.length() - 2)) {
+                if (count == 1 && (lastStar == msgId.length() - 1 || lastStar == msgId.length() - 2)) {
                     try {
                     	wcmal = new WildCardMessageAndLevel(msgId);
                     } catch (IllegalArgumentException iae) {
@@ -372,7 +372,7 @@ public class MessageRouterImpl implements MessageRouter {
                     count++;
                 }
             }
-            if (count > 1 || lastIndexAsterisk == 0 || (lastIndexAsterisk != msgId.length() - 1 && lastIndexAsterisk != msgId.length() - 2)) {
+            if (count > 1 || (lastIndexAsterisk != msgId.length() - 1 && lastIndexAsterisk != msgId.length() - 2)) {
                 // Invalid pattern — ignore silently (caller should have validated input).
             	//Only throw warning if we are beta. We can silently do the above logic because nobody knows this is supported at all.
             	if (isBeta) {
@@ -416,7 +416,7 @@ public class MessageRouterImpl implements MessageRouter {
                     count++;
                 }
             }
-            if (count > 1 || lastIndexAsterisk == 0 || (lastIndexAsterisk != msgId.length() - 1 && lastIndexAsterisk != msgId.length() - 2)) {
+            if (count > 1 || (lastIndexAsterisk != msgId.length() - 1 && lastIndexAsterisk != msgId.length() - 2)) {
                 // Invalid pattern — ignore silently. We don't quite care for removal.
                 return;
             }

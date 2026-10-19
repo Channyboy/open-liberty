@@ -26,6 +26,6 @@
          Multiple asterisks: CWK**, CWK**I, CW*L*I, CW*K*, **
          Asterisk misplaced: CW*1I, CWWKF*EFJ
          No prefix         : *I -->
-    <wsLogHandler routerThing="CWWF*K,CWWKF*X,CWWKF*1,CWWKF*i,CWK**,CWK**I,CW*L*I,CW*K*,**,CW*1I,CWWKF*EFJ,*I" />
+    <wsLogHandler routerThing="CWWF*K,CWWKF*X,CWWKF*1,CWWKF*i,CWK**,CWK**I,CW*L*I,CW*K*,**,CW*1I,CWWKF*EFJ" />
 
 </server>

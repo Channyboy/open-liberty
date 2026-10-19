@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 import com.ibm.ws.kernel.productinfo.ProductInfo;
 import com.ibm.ws.logging.RoutedMessage;
@@ -93,7 +94,7 @@ public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageR
         if (logHandlerIds != null && logHandlerIds.contains(logHandlerId)) {
             return true;
         } else {
-            logHandlerIds = getLogHandlersForMessageWC(routedMessage.getFormattedMsg());
+            logHandlerIds = getLogHandlersForMessageWC(routedMessage);
             return (logHandlerIds == null) ? false : logHandlerIds.contains(logHandlerId);
         }
     }
@@ -133,9 +134,14 @@ public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageR
     }
 
 	/**
+     * @param msgId the already parsed message id
+     * @param wildcardEligible whether wildcard patterns may be applied to this message.
+     *            False for records below INFO (e.g. System.out/System.err echo, which is
+     *            CONFIG level), whose text is not a Liberty message. Exact-ID and "*"
+     *            routing are never gated by this flag.
      * @return the Set of LogHandler IDs to route this already parsed message id
      */
-    protected Set<String> getLogHandlersForMsgIdWC(String msgId) {
+    protected Set<String> getLogHandlersForMsgIdWC(String msgId, boolean wildcardEligible) {
         if (msgId == null)
             return null;
         
@@ -152,7 +158,7 @@ public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageR
         }
 
         //Beta-guard
-		if (isBeta) {
+		if (isBeta && wildcardEligible) {
 			if (wildCardMsgIdToLogHandlerIds.size() > 0) {
 				Level msgLevelReadAsIs = parseLevel(msgId);
 
@@ -204,11 +210,29 @@ public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageR
 //    }
 
     
-    protected Set<String> getLogHandlersForMessageWC(String msg) {
+    protected Set<String> getLogHandlersForMessageWC(RoutedMessage routedMessage) {
+        if (routedMessage == null)
+            return null;
+
+        String msg = routedMessage.getFormattedMsg();
         if (msg == null)
             return null;
 
-        return getLogHandlersForMsgIdWC(parseMessageId(msg));
+        return getLogHandlersForMsgIdWC(parseMessageId(msg), isWildcardEligible(routedMessage));
+    }
+
+    /**
+     * @return true if wildcard patterns may be applied to the given message: its LogRecord
+     *         level is INFO or above. Messages below INFO (notably System.out/System.err
+     *         echo records, which are CONFIG level) can start with arbitrary text, so
+     *         wildcard matching on their first characters would give false positives.
+     *         This only decides eligibility. The log level used by a "*&lt;level&gt;" pattern is
+     *         still read from the message ID, not from the LogRecord.
+     */
+    private static boolean isWildcardEligible(RoutedMessage routedMessage) {
+        LogRecord logRecord = routedMessage.getLogRecord();
+        return logRecord != null && logRecord.getLevel() != null
+               && logRecord.getLevel().intValue() >= Level.INFO.intValue();
     }
     
     @Override
@@ -232,7 +256,7 @@ public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageR
             if (routeAllMsgsToTheseLogHandlers != null) {
                 routeToAll(routedMessage, routeAllMsgsToTheseLogHandlers, messageHidden);
             }
-            Set<String> logHandlerIds = getLogHandlersForMessageWC(routedMessage.getFormattedMsg());
+            Set<String> logHandlerIds = getLogHandlersForMessageWC(routedMessage);
             
             if (logHandlerIds == null) {
                 // There are no routing requirements for this msgId.
