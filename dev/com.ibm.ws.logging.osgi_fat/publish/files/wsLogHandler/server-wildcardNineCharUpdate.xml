@@ -1,0 +1,29 @@
+<!--
+    Copyright (c) 2026 IBM Corporation and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License 2.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+        IBM Corporation - initial API and implementation
+ -->
+<server description="WsLogHandler FAT Test Server - Wildcard IDs, 9 character IDs">
+
+    <include location="../fatTestPorts.xml" />
+
+    <featureManager>
+        <feature>wsLogHandler-1.0</feature>
+    </featureManager>
+
+    <!-- Wildcards that match 9 character IDs (4 character component code + 4 digits + level):
+           CWAB*    plain prefix, any level
+           CWAC*W   level-qualified WARNING
+           CWAD00*E prefix that includes part of the number range, level-qualified ERROR
+         and one wildcard that matches a 10 character ID:
+           CWXYZ*A  level-qualified AUDIT -->
+    <wsLogHandler routerThing="CWAB*,CWAC*W,CWAD00*E,CWXYZ*A" />
+
+</server>

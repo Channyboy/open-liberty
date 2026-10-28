@@ -1,0 +1,24 @@
+<!--
+    Copyright (c) 2026 IBM Corporation and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License 2.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+        IBM Corporation - initial API and implementation
+ -->
+<server description="WsLogHandler FAT Test Server - Exact IDs, 9 character IDs">
+
+    <include location="../fatTestPorts.xml" />
+
+    <featureManager>
+        <feature>wsLogHandler-1.0</feature>
+    </featureManager>
+
+    <!-- Two 9 character IDs (CWAB0001I, CWAB0002W) and one 10 character ID (CWXYZ0001I). -->
+    <wsLogHandler routerThing="CWAB0001I,CWAB0002W,CWXYZ0001I" />
+
+</server>

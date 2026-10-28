@@ -180,6 +180,50 @@ public class WsLogHandlerExactIdTest extends WsLogHandlerBaseTest {
     }
 
     /**
+     * Verifies exact ID routing for message IDs that are 9 characters long (a 4 character
+     * component code, e.g. {@code CWAB0001I}), alongside a 10 character ID. The router reads
+     * the ID from the first 10 characters of the message and trims the trailing colon, so a
+     * 9 character ID takes a different path from the 10 character IDs used elsewhere.
+     *
+     * <p>Updated {@code routerThing}: {@code CWAB0001I,CWAB0002W,CWXYZ0001I}.
+     */
+    @Test
+    public void testNineCharacterExactIds() throws Exception {
+        Log.info(c, "testNineCharacterExactIds", "Applying 9 character exact ID routerThing update and verifying routing");
+
+        // 1. Save server.xml so @After can restore it.
+        server.saveServerConfiguration();
+        configSaved = true;
+
+        // 2. Apply the updated server.xml.
+        server.setMarkToEndOfLog();
+        server.setServerConfigurationFile("wsLogHandler/server-exactNineCharUpdate.xml");
+        server.waitForConfigUpdateInLogUsingMark(Collections.<String> emptySet());
+
+        // 3. Clear any messages captured before the update.
+        assertEquals("Clear should return 200", 200, getStatus("/wsLogHandler/clear"));
+
+        // 4. Emit configured 9 and 10 character IDs, and 9 character IDs that are not configured.
+        String emitBody = "count=5&messages="
+                + "CWAB0001I: Configured 9 character ID must route.,"                          // routed
+                + "CWAB0002W: Configured 9 character ID at WARNING level must route.,"          // routed
+                + "CWXYZ0001I: Configured 10 character ID must still route.,"                   // routed
+                + "CWAB0003I: Same 9 character prefix, different number; must not route.,"      // not routed
+                + "CWAB0001W: Configured number but wrong level; must not route.,"              // not routed
+                + "CWAC0001I: Different 9 character component code; must not route.";          // not routed
+        assertEquals("Emit should return 200", 200, postForm("/wsLogHandler/emit/text", emitBody));
+
+        // 5. Only the configured IDs were captured, and each of them was captured.
+        assertEquals("Verify should return 200 (PASSED) — configured 9 and 10 character IDs must be captured",
+                     200, getStatus("/wsLogHandler/verify?routerThing=CWAB0001I,CWAB0002W,CWXYZ0001I"));
+        assertTrue("Captured count should be greater than 0", getCapturedCount() > 0);
+
+        // 6. The unconfigured 9 character IDs were not captured.
+        assertEquals("verifyAbsent should return 200 (PASSED) — unconfigured 9 character IDs must not be routed",
+                     200, getStatus("/wsLogHandler/verifyAbsent?patterns=CWAB0003I,CWAB0001W,CWAC0001I"));
+    }
+
+    /**
      * Verifies the special case where {@code routerThing="*"} is configured, which routes
      * ALL log messages across any component prefix and log level to the handler.
      */

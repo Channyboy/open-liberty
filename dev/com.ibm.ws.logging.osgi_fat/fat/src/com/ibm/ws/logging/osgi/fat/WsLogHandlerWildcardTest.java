@@ -164,6 +164,70 @@ public class WsLogHandlerWildcardTest extends WsLogHandlerBaseTest {
     }
 
     /**
+     * Verifies wildcard routing for message IDs that are 9 characters long (a 4 character
+     * component code, e.g. {@code CWAB0001I}), alongside a 10 character ID. The router reads
+     * the ID from the first 10 characters of the message and trims the trailing colon, so a
+     * 9 character ID takes a different path from the 10 character IDs used elsewhere.
+     *
+     * <p>Updated {@code routerThing}: {@code CWAB*,CWAC*W,CWAD00*E,CWXYZ*A}.
+     */
+    @Test
+    public void testNineCharacterWildcards() throws Exception {
+        Log.info(c, "testNineCharacterWildcards", "Applying 9 character wildcard routerThing update and verifying routing");
+
+        // 1. Save server.xml so @After can restore it.
+        server.saveServerConfiguration();
+        configSaved = true;
+
+        // 2. Apply the updated server.xml.
+        server.setMarkToEndOfLog();
+        server.setServerConfigurationFile("wsLogHandler/server-wildcardNineCharUpdate.xml");
+        server.waitForConfigUpdateInLogUsingMark(Collections.<String> emptySet());
+
+        // 3. Clear any messages captured before the update.
+        assertEquals("Clear should return 200", 200, getStatus("/wsLogHandler/clear"));
+
+        // 4. Emit messages that match and do not match each wildcard.
+        String emitBody = "count=5&messages="
+                // --- CWAB*: plain prefix, any level ---
+                + "CWAB0001I: Test component 9 char plain prefix INFO must route.,"
+                + "CWAB0002W: Test component 9 char plain prefix WARNING must route.,"
+
+                // --- CWAC*W: level-qualified WARNING ---
+                + "CWAC0005W: Test component 9 char level-qualified WARNING must route.,"
+                // INFO does not match CWAC*W; must NOT be routed.
+                + "CWAC0001I: Test component 9 char INFO does not match the WARNING-only wildcard.,"
+
+                // --- CWAD00*E: prefix includes part of the number range, ERROR ---
+                // CWAD0010E starts with CWAD00; must be routed.
+                + "CWAD0010E: Test component 9 char number range prefix matches.,"
+                // CWAD0110E starts with CWAD01, not CWAD00; must NOT be routed.
+                + "CWAD0110E: Test component 9 char number range prefix does not match.,"
+
+                // --- CWXYZ*A: 10 character ID still routes alongside the 9 character IDs ---
+                + "CWXYZ0001A: Test component 10 char level-qualified AUDIT must route.,"
+                // INFO does not match CWXYZ*A; must NOT be routed.
+                + "CWXYZ0002I: Test component 10 char INFO does not match the AUDIT-only wildcard.,"
+
+                // --- Unconfigured: CWAE prefix was never in routerThing; must NOT be routed. ---
+                + "CWAE0001I: Test component 9 char unconfigured prefix must not route.";
+        assertEquals("Emit should return 200", 200, postForm("/wsLogHandler/emit/text", emitBody));
+
+        // 5. Only messages matching the configured wildcards were captured, and each wildcard matched.
+        assertEquals("Verify should return 200 (PASSED) — only messages matching the 9 and 10 character wildcards must be captured",
+                     200, getStatus("/wsLogHandler/verify?routerThing=CWAB*,CWAC*W,CWAD00*E,CWXYZ*A"));
+        assertTrue("Captured count should be greater than 0", getCapturedCount() > 0);
+
+        // 6. The non-matching messages were not captured.
+        assertEquals("verifyAbsent should return 200 (PASSED) — level-mismatched, out-of-range and unconfigured messages must not be routed",
+                     200, getStatus("/wsLogHandler/verifyAbsent?patterns="
+                             + "CWAC0001I,"      // CWAC*W is WARNING-only; INFO excluded
+                             + "CWAD0110E,"      // CWAD00*E; 01xx is outside the 00 prefix
+                             + "CWXYZ0002I,"     // CWXYZ*A is AUDIT-only; INFO excluded
+                             + "CWAE*"));        // unconfigured prefix
+    }
+
+    /**
      * Verifies that a dynamic {@code routerThing} update is picked up correctly for wildcard patterns:
      * <ul>
      *   <li>Patterns removed from {@code routerThing} no longer route their messages.</li>
