@@ -81,6 +81,7 @@ DynamicImport-Package: \
 	io.openliberty.microprofile.telemetry.internal.common;version=latest,\
 	io.openliberty.microprofile.telemetry.logging.internal.common;version=latest,\
 	io.openliberty.io.opentelemetry.2.0;version=latest,\
+	com.ibm.ws.crypto.passwordutil;version=latest,\
 	io.opentelemetry.semconv:opentelemetry-semconv;version='1.25.0.alpha';strategy=exact,\
 	com.ibm.ws.kernel.boot.common;version=latest,\
 	io.openliberty.http.monitor,\
