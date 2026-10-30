@@ -137,7 +137,7 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
         MetricExporter metricExporter = defaultCreateExporterWrapper();
 
         Map.Entry<SSLContext, X509TrustManager> pair = retriveSSLContextAndTrustManager(mynotifier);
-
+        originalPair = pair;
         if (OtlpGrpcMetricExporter.class.isInstance(metricExporter)) {
             metricExporter = ((OtlpGrpcMetricExporter) metricExporter).toBuilder().setSslContext(pair.getKey(), pair.getValue()).build();
         } else if (OtlpHttpMetricExporter.class.isInstance(metricExporter)) {
@@ -148,10 +148,37 @@ public class OpenLibertyMetricExporterProvider extends AbstractOpenLibertySignal
 
     }
 
+    //For debugging of Ut's prototype
+    Map.Entry<SSLContext, X509TrustManager> originalPair;
+
     public void doSSlUpdate() {
 
-        MetricExporter newExporter = createOTLPExporter();
-        wrapper.updateDelegate(newExporter);
+        boolean doOg = Boolean.getBoolean("doOG");
+
+        if (doOg) {
+            System.out.println("Doing OG ");
+            MetricExporter newExporter = createOTLPExporter();
+            wrapper.updateDelegate(newExporter);
+        } else {
+            System.out.println("Doing Ut ");
+            MetricExporter newExporterSameOldSSlContextTrustManager = letsMakeNewExporterWithSameOldStuff();
+            wrapper.updateDelegate(newExporterSameOldSSlContextTrustManager);
+        }
+
+    }
+
+    //For debbuing Ut's prototype - lets' craete a NEW Metric exporter with original sslContext.
+    MetricExporter letsMakeNewExporterWithSameOldStuff() {
+        MetricExporter metricExporter = defaultCreateExporterWrapper();
+
+        //Use original resources.
+        Map.Entry<SSLContext, X509TrustManager> pair = originalPair;
+        if (OtlpGrpcMetricExporter.class.isInstance(metricExporter)) {
+            metricExporter = ((OtlpGrpcMetricExporter) metricExporter).toBuilder().setSslContext(pair.getKey(), pair.getValue()).build();
+        } else if (OtlpHttpMetricExporter.class.isInstance(metricExporter)) {
+            metricExporter = ((OtlpHttpMetricExporter) metricExporter).toBuilder().setSslContext(pair.getKey(), pair.getValue()).build();
+        }
+        return metricExporter;
     }
 
     @Override
