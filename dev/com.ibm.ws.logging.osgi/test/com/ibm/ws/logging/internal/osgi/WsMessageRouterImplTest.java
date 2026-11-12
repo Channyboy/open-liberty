@@ -611,7 +611,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testWildcardRoutingWithLevelSuffix() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
             msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
@@ -645,7 +644,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testWildcardRoutingPrefixOnlyAllLevels() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
             msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
@@ -688,7 +686,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testWildcardRoutingViaAddMsgToLogHandler() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
             msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
@@ -721,7 +718,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testWildcardRemovalViaApi() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
             msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
@@ -760,7 +756,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testMultiHandlerWildcardOverlapAndDeduplication() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
             msgRouter.setWsLogHandler("HANDLER_PREFIX", mockWsLogHandler);
@@ -813,7 +808,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testEarlyMessagesWildcardReplay() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
 
@@ -854,7 +848,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testInvalidWildcardEmitsWarningAndDoesNotRoute() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
                 	outputMgr.resetStreams();
         	outputMgr.restoreStreams();
         	outputMgr.captureStreams();
@@ -906,7 +899,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testInvalidLevelCharViaAddMsgToLogHandler() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         outputMgr.resetStreams();
         outputMgr.restoreStreams();
         outputMgr.captureStreams();
@@ -949,7 +941,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testInvalidLevelCharViaModified() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         outputMgr.resetStreams();
         outputMgr.restoreStreams();
         outputMgr.captureStreams();
@@ -993,7 +984,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testMixedValidInvalidAndExplicitRouting() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         outputMgr.resetStreams();
         outputMgr.restoreStreams();
         outputMgr.captureStreams();
@@ -1090,7 +1080,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testUpdateMessageListForHandler() throws Exception {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             // Initialize the test runner's mockery instance
             mockery = new JUnit4Mockery();
@@ -1194,17 +1183,12 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
     }
 
     /**
-     * Test that "*I" (zero-length prefix, level suffix only) is rejected as an invalid
-     * wildcard by the modified() / MessageRouter.properties path, emits CWWKE0710W,
-     * and does not dispatch any messages to the handler.
-     *
-     * Rule: the prefix before '*' must be at least one character long.
-     * "*I" has an empty prefix (lastStar == 0), so the new lastStar > 0 guard must
-     * reject it into the invalid-pattern branch.
+     * Test that "*I" (zero-length prefix, level only) is accepted as a valid wildcard by
+     * the modified() / MessageRouter.properties path: no CWWKE0710W is emitted, INFO-level
+     * message IDs are dispatched to the handler, and other levels are not.
      */
     @Test
-    public void testZeroPrefixWildcardViaModifiedEmitsWarning() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
+    public void testLevelOnlyWildcardViaModifiedRoutesByLevel() {
         outputMgr.resetStreams();
         outputMgr.restoreStreams();
         outputMgr.captureStreams();
@@ -1212,74 +1196,179 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
             msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
 
-            // "*I" has no prefix before the '*' — must be rejected
+            // "*I" has no prefix before the '*' — valid: matches every INFO-level message ID
             Properties props = new Properties();
             props.setProperty("*I", "+MYLOGHANDLER");
             msgRouter.modified(props);
 
-            // CWWKE0710W must be emitted naming the offending pattern
-            assertTrue("Expected CWWKE0710W warning for *I",
-                       outputMgr.checkForMessages("CWWKE0710W.*\\*I"));
+            assertFalse("*I is valid and must not produce CWWKE0710W",
+                        outputMgr.checkForMessages("CWWKE0710W"));
 
-            // No routing — handler must NOT be called (no expectations set)
-            RoutedMessage infoMsg = new TestRoutedMessage("ABCD1234I: Should not route via *I");
-            assertTrue("Message should not route to handler via rejected *I pattern",
-                       msgRouter.route(infoMsg, false));
+            RoutedMessage infoMsg1 = new TestRoutedMessage("ABCD1234I: Routes via *I");
+            RoutedMessage infoMsg2 = new TestRoutedMessage("WXYZ9876I: Routes via *I, any prefix");
+            RoutedMessage warnMsg  = new TestRoutedMessage("ABCD1234W: Does not match *I");
+            RoutedMessage errorMsg = new TestRoutedMessage("ABCD1234E: Does not match *I");
+            RoutedMessage auditMsg = new TestRoutedMessage("ABCD1234A: Does not match *I");
+
+            // Only the INFO-level message IDs are dispatched; any other publish fails JMock
+            setupWsLogHandlerExpectations(mockWsLogHandler, infoMsg1);
+            setupWsLogHandlerExpectations(mockWsLogHandler, infoMsg2);
+
+            assertTrue("Info message should route via *I",         msgRouter.route(infoMsg1, false));
+            assertTrue("Info message should route via *I",         msgRouter.route(infoMsg2, false));
+            assertTrue("Warning message should not route via *I",  msgRouter.route(warnMsg,  false));
+            assertTrue("Error message should not route via *I",    msgRouter.route(errorMsg, false));
+            assertTrue("Audit message should not route via *I",    msgRouter.route(auditMsg, false));
         } finally {
             System.clearProperty("com.ibm.ws.beta.edition");
         }
     }
 
     /**
-     * Test that "*I" (zero-length prefix, level suffix only) is rejected as an invalid
-     * wildcard by the addMsgToLogHandler() / programmatic API path, emits CWWKE0710W,
-     * and does not dispatch any messages to the handler.
+     * Test that the level-only wildcards "*I", "*E", "*W" and "*A" are all accepted by the
+     * addMsgToLogHandler() / programmatic API path, emit no CWWKE0710W, and that two
+     * handlers, each subscribed to a different subset of the levels, receive only the
+     * message IDs ending in a level letter they subscribed to:
      *
-     * Also covers the related zero-prefix patterns "*E", "*W", "*A", and bare "*"
-     * (the bare "*" goes through the exact-ID map and is NOT rejected — that is
-     * intentional; the others share the same zero-prefix code path).
+     *  - INFO_ERROR_HANDLER subscribes to "*I" and "*E" (not W or A)
+     *  - WARN_AUDIT_HANDLER subscribes to "*W" and "*A" (not I or E)
+     *
+     * Only the expected deliveries are set up. JMock fails any publish() call that has no
+     * matching expectation, so a handler receiving a level it did not subscribe to (or an
+     * unrecognised level letter) fails the test.
      */
     @Test
-    public void testZeroPrefixWildcardViaAddMsgToLogHandlerEmitsWarning() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
+    public void testLevelOnlyWildcardsViaAddMsgToLogHandlerRouteByLevel() {
         outputMgr.resetStreams();
         outputMgr.restoreStreams();
         outputMgr.captureStreams();
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
-            msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
+            msgRouter.setWsLogHandler("INFO_ERROR_HANDLER", mockWsLogHandler);
+            msgRouter.setWsLogHandler("WARN_AUDIT_HANDLER", mockWsLogHandler1);
 
-            // All zero-prefix wildcard patterns must be rejected
-            msgRouter.addMsgToLogHandler("*I", "MYLOGHANDLER");
-            msgRouter.addMsgToLogHandler("*E", "MYLOGHANDLER");
-            msgRouter.addMsgToLogHandler("*W", "MYLOGHANDLER");
-            msgRouter.addMsgToLogHandler("*A", "MYLOGHANDLER");
+            // Each handler subscribes to a subset of the levels
+            msgRouter.addMsgToLogHandler("*I", "INFO_ERROR_HANDLER");
+            msgRouter.addMsgToLogHandler("*E", "INFO_ERROR_HANDLER");
+            msgRouter.addMsgToLogHandler("*W", "WARN_AUDIT_HANDLER");
+            msgRouter.addMsgToLogHandler("*A", "WARN_AUDIT_HANDLER");
 
-            // Each must emit CWWKE0710W naming the offending pattern
-            assertTrue("Expected CWWKE0710W warning for *I",
-                       outputMgr.checkForMessages("CWWKE0710W.*\\*I"));
-            assertTrue("Expected CWWKE0710W warning for *E",
-                       outputMgr.checkForMessages("CWWKE0710W.*\\*E"));
-            assertTrue("Expected CWWKE0710W warning for *W",
-                       outputMgr.checkForMessages("CWWKE0710W.*\\*W"));
-            assertTrue("Expected CWWKE0710W warning for *A",
-                       outputMgr.checkForMessages("CWWKE0710W.*\\*A"));
+            assertFalse("*I, *E, *W and *A are valid and must not produce CWWKE0710W",
+                        outputMgr.checkForMessages("CWWKE0710W"));
 
-            // None of the rejected patterns should cause handler dispatch
-            RoutedMessage infoMsg  = new TestRoutedMessage("ABCD1234I: Should not route via *I");
-            RoutedMessage errorMsg = new TestRoutedMessage("ABCD1234E: Should not route via *E");
-            RoutedMessage warnMsg  = new TestRoutedMessage("ABCD1234W: Should not route via *W");
-            RoutedMessage auditMsg = new TestRoutedMessage("ABCD1234A: Should not route via *A");
-            // No expectations set — any handler call would fail the JMock assertion
+            RoutedMessage infoMsg  = new TestRoutedMessage("ABCD1234I: Info");
+            RoutedMessage errorMsg = new TestRoutedMessage("ABCD1234E: Error");
+            RoutedMessage warnMsg  = new TestRoutedMessage("ABCD1234W: Warning");
+            RoutedMessage auditMsg = new TestRoutedMessage("ABCD1234A: Audit");
+            RoutedMessage otherMsg = new TestRoutedMessage("ABCD1234X: Unrecognised level letter");
 
-            assertTrue("Info message should not dispatch via rejected *I",  msgRouter.route(infoMsg,  false));
-            assertTrue("Error message should not dispatch via rejected *E",  msgRouter.route(errorMsg, false));
-            assertTrue("Warn message should not dispatch via rejected *W",   msgRouter.route(warnMsg,  false));
-            assertTrue("Audit message should not dispatch via rejected *A",  msgRouter.route(auditMsg, false));
+            // Each message is delivered once, to the handler subscribed to its level letter.
+            // No other handler/message combination is expected, so none may occur.
+            setupWsLogHandlerExpectations(mockWsLogHandler,  infoMsg);
+            setupWsLogHandlerExpectations(mockWsLogHandler,  errorMsg);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, warnMsg);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, auditMsg);
+            // otherMsg: no expectation — must not be dispatched to either handler
+
+            assertTrue("Info message should route via *I",     msgRouter.route(infoMsg,  false));
+            assertTrue("Error message should route via *E",    msgRouter.route(errorMsg, false));
+            assertTrue("Warning message should route via *W",  msgRouter.route(warnMsg,  false));
+            assertTrue("Audit message should route via *A",    msgRouter.route(auditMsg, false));
+            assertTrue("Unrecognised level should not route",  msgRouter.route(otherMsg, false));
         } finally {
             System.clearProperty("com.ibm.ws.beta.edition");
         }
     }
+
+    /**
+     * Wildcard patterns must not match records below INFO, such as the CONFIG-level records
+     * created for System.out / System.err output. Their text can start with anything, so
+     * matching a wildcard against its first characters would give false positives.
+     *
+     * The same message text (starting with a real message ID) is routed twice, once in a
+     * CONFIG-level record and once in an INFO-level record:
+     *
+     *  - WILDCARD_HANDLER subscribes to "*I", "CWWKF*" and "CWWKF*I" (empty prefix, prefix only,
+     *    and prefix plus level), all of which match the message ID
+     *  - EXACT_HANDLER subscribes to the exact ID "CWWKF0011I"
+     *  - ALL_HANDLER subscribes to the route-all "*"
+     *
+     * CONFIG record: only the wildcard handler is skipped. The exact-ID and route-all
+     * subscriptions are not affected by the guard.
+     * INFO record: all three handlers receive the message. This control shows that the
+     * record level alone decides wildcard eligibility.
+     */
+    @Test
+    public void testConfigLevelRecordsAreNotMatchedByWildcards() {
+        try {
+            WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
+            msgRouter.setWsLogHandler("WILDCARD_HANDLER", mockWsLogHandler);
+            msgRouter.setWsLogHandler("EXACT_HANDLER", mockWsLogHandler1);
+            msgRouter.setWsLogHandler("ALL_HANDLER", mockWsLogHandler2);
+
+            msgRouter.addMsgToLogHandler("*I", "WILDCARD_HANDLER");
+            msgRouter.addMsgToLogHandler("CWWKF*", "WILDCARD_HANDLER");
+            msgRouter.addMsgToLogHandler("CWWKF*I", "WILDCARD_HANDLER");
+            msgRouter.addMsgToLogHandler("CWWKF0011I", "EXACT_HANDLER");
+            msgRouter.addMsgToLogHandler("*", "ALL_HANDLER");
+
+            // Same text and message ID, differing only in the level of the LogRecord
+            RoutedMessage configMsg = new TestRoutedMessage("CWWKF0011I: echoed to System.out", Level.CONFIG);
+            RoutedMessage infoMsg = new TestRoutedMessage("CWWKF0011I: logged as INFO", Level.INFO);
+
+            // CONFIG record: exact-ID and route-all handlers only. WILDCARD_HANDLER has no
+            // expectation for it, so receiving it fails the test.
+            setupWsLogHandlerExpectations(mockWsLogHandler1, configMsg);
+            setupWsLogHandlerExpectations(mockWsLogHandler2, configMsg);
+
+            // INFO record: all three handlers
+            setupWsLogHandlerExpectations(mockWsLogHandler, infoMsg);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, infoMsg);
+            setupWsLogHandlerExpectations(mockWsLogHandler2, infoMsg);
+
+            assertTrue("CONFIG record should route normally", msgRouter.route(configMsg, false));
+            assertTrue("INFO record should route normally", msgRouter.route(infoMsg, false));
+        } finally {
+            System.clearProperty("com.ibm.ws.beta.edition");
+        }
+    }
+
+    /**
+     * The wildcard eligibility rule must also apply when earlier (buffered) messages are
+     * replayed to a newly registered handler, so that replay and live routing agree.
+     *
+     * A CONFIG-level record and an INFO-level record, both with the text "CWWKF0011I: ...",
+     * are buffered before any handler exists. When a handler subscribed to "*I" and "CWWKF*"
+     * registers, only the INFO-level record is replayed to it.
+     */
+    @Test
+    public void testEarlyMessageReplaySkipsConfigLevelRecordsForWildcards() {
+        try {
+            WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
+
+            Queue<RoutedMessage> earlierMessages = new ConcurrentLinkedQueue<RoutedMessage>();
+            msgRouter.setEarlierMessages(earlierMessages);
+
+            RoutedMessage configMsg = new TestRoutedMessage("CWWKF0011I: echoed to System.out", Level.CONFIG);
+            RoutedMessage infoMsg = new TestRoutedMessage("CWWKF0011I: logged as INFO", Level.INFO);
+
+            // No handlers yet: both messages are buffered
+            assertTrue(msgRouter.route(configMsg, false));
+            assertTrue(msgRouter.route(infoMsg, false));
+
+            msgRouter.addMsgToLogHandler("*I", "MYLOGHANDLER");
+            msgRouter.addMsgToLogHandler("CWWKF*", "MYLOGHANDLER");
+
+            // Only the INFO-level record is replayed. configMsg has no expectation.
+            setupWsLogHandlerExpectations(mockWsLogHandler, infoMsg);
+
+            // Registering the handler triggers the replay
+            msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
+        } finally {
+            System.clearProperty("com.ibm.ws.beta.edition");
+        }
+    }
+
 
     /**
      * Verify that when a single handler is registered under multiple overlapping patterns
@@ -1298,7 +1387,6 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
      */
     @Test
     public void testOverlappingPatternsRouteHandlerExactlyOnce() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
             msgRouter.setWsLogHandler("MYLOGHANDLER", mockWsLogHandler);
@@ -1323,16 +1411,201 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
     }
 
     /**
+     * Verify that the level-only wildcard "*I" overlapping with a prefix wildcard ("CWW*"), an
+     * exact ID ("CWW12345I") and the route-all "*" never delivers a message to the same
+     * handler more than once.
+     *
+     *  - H1 (mockWsLogHandler) subscribes to "*I", "CWW*" and "CWW12345I"
+     *  - H2 (mockWsLogHandler1) subscribes to the route-all "*" and to "*I"
+     *
+     * JMock's {@code oneOf} expectation fails if publish() is called more than once for a
+     * handler/message pair. Handler/message pairs without an expectation must not occur.
+     */
+    @Test
+    public void testLevelOnlyWildcardOverlapRoutesHandlerExactlyOnce() {
+        try {
+            WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
+            msgRouter.setWsLogHandler("H1", mockWsLogHandler);
+            msgRouter.setWsLogHandler("H2", mockWsLogHandler1);
+
+            msgRouter.addMsgToLogHandler("*I",        "H1");
+            msgRouter.addMsgToLogHandler("CWW*",      "H1");
+            msgRouter.addMsgToLogHandler("CWW12345I", "H1");
+
+            msgRouter.addMsgToLogHandler("*",  "H2");
+            msgRouter.addMsgToLogHandler("*I", "H2");
+
+            // Matches all of H1's patterns, and H2's "*" and "*I"
+            RoutedMessage tripleMatch = new TestRoutedMessage("CWW12345I: server started");
+            // Matches H1 via "CWW*" only, and H2 via "*"
+            RoutedMessage prefixOnly = new TestRoutedMessage("CWW12345W: warning");
+            // Matches H1 via "*I" only, and H2 via "*" and "*I"
+            RoutedMessage levelOnly = new TestRoutedMessage("XXXX0001I: info");
+            // Matches H2 via "*" only
+            RoutedMessage routeAllOnly = new TestRoutedMessage("XXXX0001W: warning");
+
+            setupWsLogHandlerExpectations(mockWsLogHandler,  tripleMatch);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, tripleMatch);
+            setupWsLogHandlerExpectations(mockWsLogHandler,  prefixOnly);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, prefixOnly);
+            setupWsLogHandlerExpectations(mockWsLogHandler,  levelOnly);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, levelOnly);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, routeAllOnly);
+            // H1 must not receive routeAllOnly: no expectation
+
+            assertTrue("CWW12345I should route and return true",  msgRouter.route(tripleMatch,  false));
+            assertTrue("CWW12345W should route and return true",  msgRouter.route(prefixOnly,   false));
+            assertTrue("XXXX0001I should route and return true",  msgRouter.route(levelOnly,    false));
+            assertTrue("XXXX0001W should route and return true",  msgRouter.route(routeAllOnly, false));
+        } finally {
+            System.clearProperty("com.ibm.ws.beta.edition");
+        }
+    }
+
+    /**
+     * Verify that when two different handlers both subscribe to the same level-only wildcard
+     * ("*I"), each handler receives every INFO-level message ID exactly once, and neither
+     * receives other levels.
+     */
+    @Test
+    public void testLevelOnlyWildcardWithTwoHandlersDeliversToEachOnce() {
+        try {
+            WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
+            msgRouter.setWsLogHandler("H1", mockWsLogHandler);
+            msgRouter.setWsLogHandler("H2", mockWsLogHandler1);
+
+            msgRouter.addMsgToLogHandler("*I", "H1");
+            msgRouter.addMsgToLogHandler("*I", "H2");
+
+            RoutedMessage infoMsg1 = new TestRoutedMessage("ABCD1234I: info one");
+            RoutedMessage infoMsg2 = new TestRoutedMessage("WXYZ9876I: info two");
+            RoutedMessage warnMsg  = new TestRoutedMessage("ABCD1234W: warning");
+
+            setupWsLogHandlerExpectations(mockWsLogHandler,  infoMsg1);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, infoMsg1);
+            setupWsLogHandlerExpectations(mockWsLogHandler,  infoMsg2);
+            setupWsLogHandlerExpectations(mockWsLogHandler1, infoMsg2);
+            // warnMsg: no expectation — neither handler may receive it
+
+            assertTrue("Info message one should route and return true", msgRouter.route(infoMsg1, false));
+            assertTrue("Info message two should route and return true", msgRouter.route(infoMsg2, false));
+            assertTrue("Warning message should not route via *I",       msgRouter.route(warnMsg,  false));
+        } finally {
+            System.clearProperty("com.ibm.ws.beta.edition");
+        }
+    }
+
+    /**
+     * Test the updateMessageListForHandler() flow in MessageRouterConfigurator (the path used
+     * by internal consumers such as zosLogging) with a level-only wildcard:
+     *
+     *  - "*I,ABCD*" registers both a level-only and a prefix wildcard
+     *  - "ABCD*" drops "*I", so INFO messages with other prefixes stop routing
+     *  - ""       drops everything, so nothing routes
+     */
+    @Test
+    public void testUpdateMessageListForHandlerWithLevelOnlyWildcard() throws Exception {
+        try {
+            // Initialize the test runner's mockery instance
+            mockery = new JUnit4Mockery();
+            BundleContext mockCtx = mockery.mock(BundleContext.class, "BundleContext");
+            WsLogHandler mockHandler = mockery.mock(WsLogHandler.class, "ConfiguratorHandler");
+
+            // Stub OSGi calls made during MessageRouterConfigurator initialization
+            mockery.checking(new Expectations() {{
+                allowing(mockCtx).addServiceListener(with(any(org.osgi.framework.ServiceListener.class)), with(any(String.class)));
+                allowing(mockCtx).getServiceReferences(with(any(String.class)), with(aNull(String.class)));
+                    will(returnValue(null));
+                allowing(mockCtx).registerService(with(any(Class.class)), with(any(Object.class)), with(any(java.util.Dictionary.class)));
+                    will(returnValue(null));
+                allowing(mockCtx).addBundleListener(with(any(org.osgi.framework.BundleListener.class)));
+                allowing(mockCtx).getBundles();
+                    will(returnValue(new Bundle[0]));
+            }});
+
+            final WsMessageRouterImpl router = new WsMessageRouterImpl();
+            router.setWsLogHandler("WTO", mockHandler);
+
+            // Subclass MessageRouterConfigurator to inject our router instead of the singleton.
+            MessageRouterConfigurator configurator = new MessageRouterConfigurator(mockCtx) {
+                @Override
+                protected WsMessageRouterImpl getMessageRouter() {
+                    if (msgRouter == null) {
+                        msgRouter = router;
+                    }
+                    return msgRouter;
+                }
+            };
+
+            // ---------------------------------------------------------------
+            // First call: level-only wildcard and prefix wildcard
+            // ---------------------------------------------------------------
+            configurator.updateMessageListForHandler("*I,ABCD*", "WTO");
+
+            RoutedMessage otherInfo  = new TestRoutedMessage("XXXX0001I: INFO, matches *I");
+            RoutedMessage abcdInfo   = new TestRoutedMessage("ABCD1234I: INFO, matches *I and ABCD*");
+            RoutedMessage abcdWarn   = new TestRoutedMessage("ABCD1234W: matches ABCD* only");
+            RoutedMessage otherWarn  = new TestRoutedMessage("XXXX0001W: matches nothing");
+
+            setupWsLogHandlerExpectations(mockHandler, otherInfo);
+            setupWsLogHandlerExpectations(mockHandler, abcdInfo);    // once, despite matching twice
+            setupWsLogHandlerExpectations(mockHandler, abcdWarn);
+            // otherWarn: no expectation — must NOT be called
+
+            assertTrue(router.route(otherInfo, false));
+            assertTrue(router.route(abcdInfo,  false));
+            assertTrue(router.route(abcdWarn,  false));
+            assertTrue(router.route(otherWarn, false));
+
+            mockery.assertIsSatisfied();
+
+            // ---------------------------------------------------------------
+            // Second call: "*I" is removed, "ABCD*" stays
+            // ---------------------------------------------------------------
+            configurator.updateMessageListForHandler("ABCD*", "WTO");
+
+            RoutedMessage otherInfo2 = new TestRoutedMessage("XXXX0002I: *I removed, should not route");
+            RoutedMessage abcdWarn2  = new TestRoutedMessage("ABCD1234W: still routes via ABCD*");
+
+            setupWsLogHandlerExpectations(mockHandler, abcdWarn2);
+            // otherInfo2: no expectation — must NOT be called
+
+            assertTrue(router.route(otherInfo2, false));
+            assertTrue(router.route(abcdWarn2,  false));
+
+            mockery.assertIsSatisfied();
+
+            // ---------------------------------------------------------------
+            // Third call: empty list removes everything
+            // ---------------------------------------------------------------
+            configurator.updateMessageListForHandler("", "WTO");
+
+            RoutedMessage abcdWarn3  = new TestRoutedMessage("ABCD1234W: removed, should not route");
+            RoutedMessage otherInfo3 = new TestRoutedMessage("XXXX0003I: removed, should not route");
+            // No expectations: nothing may be published
+
+            assertTrue(router.route(abcdWarn3,  false));
+            assertTrue(router.route(otherInfo3, false));
+
+            mockery.assertIsSatisfied();
+
+        } finally {
+            System.clearProperty("com.ibm.ws.beta.edition");
+        }
+    }
+
+
+    /**
      * Verify that wildcard subscriptions registered in the router do NOT affect
      * strict SPI LogHandler routing via MessageRouterImpl.route(String, LogRecord).
      *
      * Wildcard matching is an internal WsLogHandler feature; standard SPI LogHandlers
      * (com.ibm.wsspi.logging.LogHandler) must only receive messages matching exact ID
-     * subscriptions.
+     * subscriptions. This covers both a prefix wildcard ("ABCD*") and a level-only
+     * wildcard ("*I").
      */
     @Test
     public void testWildcardsDoNotAffectStrictSpiLogHandlers() {
-        System.setProperty("com.ibm.ws.beta.edition", "true");
         try {
             WsMessageRouterImpl msgRouter = getWsMessageRouterImpl();
 
@@ -1340,9 +1613,10 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
             LogHandler spiHandler = mockery.mock(LogHandler.class, "SpiLogHandler");
             msgRouter.setLogHandler("SPI_HANDLER", spiHandler);
 
-            // Register a wildcard pattern and an exact match pattern
+            // Register prefix and level-only wildcard patterns and an exact match pattern
             Properties props = new Properties();
             props.setProperty("ABCD*", "+SPI_HANDLER");
+            props.setProperty("*I", "+SPI_HANDLER");
             props.setProperty("EXACT0001I", "+SPI_HANDLER");
             msgRouter.modified(props);
 
@@ -1351,6 +1625,10 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
 
             String wildcardMsg = "ABCD1234I: Wildcard message that should NOT route to SPI handler";
             LogRecord wildcardRecord = new LogRecord(Level.INFO, wildcardMsg);
+
+            // Matches only the level-only wildcard "*I", not "ABCD*"
+            String levelOnlyMsg = "WXYZ9876I: Level-only wildcard message that should NOT route to SPI handler";
+            LogRecord levelOnlyRecord = new LogRecord(Level.INFO, levelOnlyMsg);
 
             // Expect spiHandler to receive ONLY the exact message, NOT the wildcard message
             mockery.checking(new Expectations() {{
@@ -1362,6 +1640,9 @@ public class WsMessageRouterImplTest extends MessageRouterImplTest {
 
             // Wildcard message must NOT be dispatched to SPI handler (no expectation set), returns true
             assertTrue("Wildcard message should not route to SPI LogHandler", msgRouter.route(wildcardMsg, wildcardRecord));
+
+            // Level-only wildcard message must NOT be dispatched to SPI handler either, returns true
+            assertTrue("Level-only wildcard message should not route to SPI LogHandler", msgRouter.route(levelOnlyMsg, levelOnlyRecord));
         } finally {
             System.clearProperty("com.ibm.ws.beta.edition");
         }
@@ -1376,8 +1657,18 @@ class TestRoutedMessage implements RoutedMessage {
     private final LogRecord logRecord;
 
     public TestRoutedMessage(String formattedMsg) {
+        this(formattedMsg, Level.INFO);
+    }
+
+    /**
+     * @param recordLevel the level of the underlying LogRecord. This is independent of the
+     *            level letter at the end of the message ID in formattedMsg, as in real
+     *            Liberty messages. Use a level below INFO (e.g. Level.CONFIG) to simulate
+     *            System.out/System.err echo records.
+     */
+    public TestRoutedMessage(String formattedMsg, Level recordLevel) {
         this.formattedMsg = formattedMsg;
-        this.logRecord = new LogRecord(Level.INFO, formattedMsg);
+        this.logRecord = new LogRecord(recordLevel, formattedMsg);
     }
 
     @Override

@@ -43,8 +43,6 @@ import com.ibm.ws.logging.WsMessageRouter;
  */
 public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageRouter {
 	
-	 private static boolean isBeta;
-	
     private static final ReentrantReadWriteLock RERWLOCK = new ReentrantReadWriteLock(true);
     /**
      * Map of LogHandlerIDs to WsLogHandlers.
@@ -65,7 +63,6 @@ public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageR
      * CTOR, protected.
      */
     protected WsMessageRouterImpl() {
-    	isBeta = ProductInfo.getBetaEdition();
     }
 
     /**
@@ -158,7 +155,7 @@ public class WsMessageRouterImpl extends MessageRouterImpl implements WsMessageR
         }
 
         //Beta-guard
-		if (isBeta && wildcardEligible) {
+		if (wildcardEligible) {
 			if (wildCardMsgIdToLogHandlerIds.size() > 0) {
 				Level msgLevelReadAsIs = parseLevel(msgId);
 

@@ -260,4 +260,48 @@ public class WsLogHandlerWildcardTest extends WsLogHandlerBaseTest {
                              + "CWLFR*,"        // unconfigured prefix
                              + "CWLFS*"));      // unconfigured prefix
     }
+
+    /**
+     * Verifies level-only wildcards ({@code *<level>}) applied through a dynamic update.
+     * Messages are routed by the level letter at the end of the message ID, whatever the prefix,
+     * and the form coexists with a prefix+level wildcard.
+     *
+     * <p>Initial {@code routerThing}: {@code CWLFA*,CWLFB*W,CWLFC*A,CWLFD*E}.<br>
+     * Updated {@code routerThing}: {@code *E,*A,CWLFH*I}.
+     */
+    @Test
+    public void testDynamicUpdateToLevelOnlyWildcards() throws Exception {
+        Log.info(c, "testDynamicUpdateToLevelOnlyWildcards", "Applying level-only wildcard routerThing update and verifying routing");
+
+        server.saveServerConfiguration();
+        configSaved = true;
+
+        server.setMarkToEndOfLog();
+        server.setServerConfigurationFile("wsLogHandler/server-levelOnlyUpdate.xml");
+        server.waitForConfigUpdateInLogUsingMark(Collections.<String> emptySet());
+
+        assertEquals("Clear should return 200", 200, getStatus("/wsLogHandler/clear"));
+
+        String emitBody = "count=7&messages="
+                // *E and *A match on level for any prefix; must be routed.
+                + "CWLFA0001E: Test component alpha error matches *E.,"
+                + "CWLFB0002A: Test component beta audit matches *A.,"
+                + "CWLFZ0003E: Test component zulu error matches *E.,"
+                // CWLFH*I still works alongside the level-only forms; must be routed.
+                + "CWLFH0004I: Test component hotel info matches CWLFH*I.,"
+                // INFO and WARNING from other prefixes match no configured pattern; must NOT be routed.
+                + "CWLFC0005I: Test component charlie info is not subscribed.,"
+                + "CWLFD0006W: Test component delta warning is not subscribed.,"
+                // CWLFH*I is INFO-only and is not widened by the level-only entries; must NOT be routed.
+                + "CWLFH0007W: Test component hotel warning does not match CWLFH*I.";
+        assertEquals("Emit should return 200", 200, postForm("/wsLogHandler/emit/text", emitBody));
+
+        // Every captured message must match *E, *A or CWLFH*I, and each pattern must be captured at least once.
+        assertEquals("Verify should return 200 (PASSED) - only level-only and CWLFH*I messages must be captured",
+                     200, getStatus("/wsLogHandler/verify?routerThing=*E,*A,CWLFH*I"));
+        assertTrue("Captured count should be greater than 0", getCapturedCount() > 0);
+
+        assertEquals("verifyAbsent should return 200 (PASSED) - non-subscribed levels must not be routed",
+                     200, getStatus("/wsLogHandler/verifyAbsent?patterns=CWLFC0005I,CWLFD0006W,CWLFH0007W"));
+    }
 }

@@ -21,10 +21,10 @@
     <!-- A mix of valid and invalid patterns. Keep in sync with GOOD_PATTERNS and
          BAD_PATTERNS in WsLogHandlerInvalidWildcardTest.
 
-         Valid  : CWLFA* (prefix), CWLFB*W (prefix + level), CWLFC0001I (exact ID)
-         Invalid: CWLFD*K (unrecognised level), CWLFE** (multiple asterisks)
+         Valid  : CWLFA* (prefix), CWLFB*W (prefix + level), CWLFC0001I (exact ID), *E (level only)
+         Invalid: CWLFD*K (unrecognised level), CWLFE** (multiple asterisks), *X (unrecognised level, no prefix)
 
          The router must register the valid patterns, and reject each invalid one with CWWKE0710W. -->
-    <wsLogHandler routerThing="CWLFA*,CWLFD*K,CWLFB*W,CWLFE**,CWLFC0001I" />
+    <wsLogHandler routerThing="CWLFA*,CWLFD*K,CWLFB*W,CWLFE**,CWLFC0001I,*E,*X" />
 
 </server>

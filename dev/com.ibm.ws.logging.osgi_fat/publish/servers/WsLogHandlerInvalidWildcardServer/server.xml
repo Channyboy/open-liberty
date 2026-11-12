@@ -18,14 +18,16 @@
         <feature>wsLogHandler-1.0</feature>
     </featureManager>
 
-    <!-- Every pattern below violates the wildcard syntax <prefix>*[<level>], where level is
+    <!-- Every pattern below violates the wildcard syntax <prefix>*[<level>] or *<level>, where level is
          one of I, A, W, E. The router must reject each one and emit CWWKE0710W for it.
          Keep this list in sync with INVALID_PATTERNS in WsLogHandlerInvalidWildcardTest.
 
-         Invalid log level : CWWF*K, CWWKF*X, CWWKF*1, CWWKF*i
-         Multiple asterisks: CWK**, CWK**I, CW*L*I, CW*K*, **
-         Asterisk misplaced: CW*1I, CWWKF*EFJ
-         No prefix         : *I -->
-    <wsLogHandler routerThing="CWWF*K,CWWKF*X,CWWKF*1,CWWKF*i,CWK**,CWK**I,CW*L*I,CW*K*,**,CW*1I,CWWKF*EFJ" />
+         Invalid log level                 : CWWF*K, CWWKF*X, CWWKF*1, CWWKF*i
+         Invalid log level (no prefix)     : *X, *1, *i, *P
+         Multiple asterisks                : CWK**, CWK**I, CW*L*I, CW*K*, **
+         Multiple asterisks (no prefix)    : **I
+         Asterisk misplaced                : CW*1I, CWWKF*EFJ
+         Asterisk misplaced (no prefix)    : *IW, *IK -->
+    <wsLogHandler routerThing="CWWF*K,CWWKF*X,CWWKF*1,CWWKF*i,*X,*1,*i,*P,CWK**,CWK**I,CW*L*I,CW*K*,**,**I,CW*1I,CWWKF*EFJ,*IW,*IK" />
 
 </server>

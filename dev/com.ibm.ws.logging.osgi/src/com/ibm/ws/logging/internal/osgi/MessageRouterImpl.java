@@ -36,7 +36,6 @@ public class MessageRouterImpl implements MessageRouter {
 
     private static final TraceComponent tc = Tr.register(MessageRouterImpl.class);
     
-    private static boolean isBeta;
 
     /**
      * Map of LogHandlerIDs to LogHandlers.
@@ -158,7 +157,7 @@ public class MessageRouterImpl implements MessageRouter {
      * CTOR, protected.
      */
     protected MessageRouterImpl() {
-    	isBeta = ProductInfo.getBetaEdition();
+
     }
 
     /**
@@ -284,27 +283,28 @@ public class MessageRouterImpl implements MessageRouter {
                 if (count == 1 && (lastStar == msgId.length() - 1 || lastStar == msgId.length() - 2)) {
                     try {
                     	wcmal = new WildCardMessageAndLevel(msgId);
-                    } catch (IllegalArgumentException iae) {
-                    	//Bad - continue;
-                    	if (isBeta) {
-                    	   	Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
-                    	   	if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
-                        		Tr.debug(tc, String.format("Improper wildcard message ID detected from MessageRouter.properties for Message ID:[%s] for handlers Handler(s):[%s]", msgId, logHandlerIds), null);
-                        	}
-                    	}
-                    	continue;
-                    }
+					} catch (IllegalArgumentException iae) {
+						// Bad - continue;
+						Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
+						if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
+							Tr.debug(tc, String.format(
+									"Improper wildcard message ID detected from MessageRouter.properties for Message ID:[%s] for handlers Handler(s):[%s]",
+									msgId, logHandlerIds), null);
+						}
+						continue;
+					}
                     isWildCard = true;
                 } else {
-                	//Only throw warning if we are beta. We can silently do the above logic because nobody is actually using props or know that his feature is supported.
-                	if (isBeta) {
-                	   	Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
-                	   	if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
-                    		Tr.debug(tc, String.format("Improper wildcard message ID detected from MessageRouter.properties for Message ID:[%s] for handlers Handler(s):[%s]", msgId, logHandlerIds), null);
-                    	}
-                	}
-                    continue;
-                }
+					// We can silently do the above logic because nobody is actually using props or
+					// know that his feature is supported.
+					Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
+					if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
+						Tr.debug(tc, String.format(
+								"Improper wildcard message ID detected from MessageRouter.properties for Message ID:[%s] for handlers Handler(s):[%s]",
+								msgId, logHandlerIds), null);
+					}
+					continue;
+				}
             }
 
             Set<String> logHandlerIdSet = isWildCard
@@ -373,29 +373,32 @@ public class MessageRouterImpl implements MessageRouter {
                 }
             }
             if (count > 1 || (lastIndexAsterisk != msgId.length() - 1 && lastIndexAsterisk != msgId.length() - 2)) {
-                // Invalid pattern — ignore silently (caller should have validated input).
-            	//Only throw warning if we are beta. We can silently do the above logic because nobody knows this is supported at all.
-            	if (isBeta) {
-                	Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
-                	if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
-                		Tr.debug(tc, String.format("Improper wildcard message ID detected from for Message ID:[%s] from handler:[%s]", msgId, handlerId), null);
-                	}
-            	}
-                return;
-            } 
+				// Invalid pattern — ignore silently (caller should have validated input).
+				Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
+				if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
+					Tr.debug(tc,
+							String.format(
+									"Improper wildcard message ID detected from for Message ID:[%s] from handler:[%s]",
+									msgId, handlerId),
+							null);
+				}
+				return;
+			}
             WildCardMessageAndLevel wcmal; 
             try {
             	wcmal = new WildCardMessageAndLevel(msgId);
-            } catch (IllegalArgumentException iae) {
-            	//Bad - return.
-            	if (isBeta) {
-                	Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
-                	if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
-                		Tr.debug(tc, String.format("Improper wildcard message ID detected from for Message ID:[%s] from handler:[%s]", msgId, handlerId), null);
-                	}
-            	}
-            	return;
-            }
+			} catch (IllegalArgumentException iae) {
+				// Bad - return.
+				Tr.warning(tc, "MESSAGE.ROUTER.INVALID.WILDCARD.MESSAGE.ID.CWWKE0710W", msgId);
+				if (tc.isDebugEnabled() && TraceComponent.isAnyTracingEnabled()) {
+					Tr.debug(tc,
+							String.format(
+									"Improper wildcard message ID detected from for Message ID:[%s] from handler:[%s]",
+									msgId, handlerId),
+							null);
+				}
+				return;
+			}
             Set<String> wcLogHandlerIdSet = getOrCreateWildCardLogHandlerIdSet(wcmal);
             wcLogHandlerIdSet.add(handlerId);
         }

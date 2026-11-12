@@ -35,9 +35,10 @@ import componenttest.topology.impl.LibertyServer;
  * FAT tests verifying that invalid wildcard message ID patterns are rejected by the
  * router and reported with warning CWWKE0710W.
  *
- * <p>The valid syntax is {@code <prefix>*[<level>]}: a non-empty prefix, exactly one
- * {@code *} as the last or second-to-last character, and an optional level letter
- * (I, A, W or E).
+ * <p>The valid syntax is either {@code <prefix>*[<level>]} (a non-empty prefix, then
+ * {@code *}, then an optional level letter) or the level-only form {@code *<level>}
+ * (the level letter is required). In both forms there is exactly one {@code *}, it is the
+ * last or second-to-last character, and the level letter is one of I, A, W or E.
  *
  * <p>Each test starts the server it needs (see {@link #startServer(LibertyServer)}) and
  * {@link #stopServer()} stops it afterwards, because each scenario needs a different
@@ -62,23 +63,29 @@ public class WsLogHandlerInvalidWildcardTest extends WsLogHandlerBaseTest {
     private static final String[] INVALID_PATTERNS = {
         // Invalid log level
         "CWWF*K", "CWWKF*X", "CWWKF*1", "CWWKF*i",
+        // Invalid log level, level-only form (no prefix)
+        "*X", "*1", "*i", "*P",
         // Multiple asterisks
         "CWK**", "CWK**I", "CW*L*I", "CW*K*", "**",
+        // Multiple asterisks, level-only form (no prefix)
+        "**I",
         // Asterisk misplaced: followed by more than one character
-        "CW*1I", "CWWKF*EFJ"
+        "CW*1I", "CWWKF*EFJ",
+        // Asterisk misplaced, level-only form (no prefix): followed by more than one character
+        "*IW", "*IK"
     };
 
     /**
      * Valid patterns in the mixed server. Must match the routerThing value in
      * WsLogHandlerMixedWildcardServer/server.xml.
      */
-    private static final String GOOD_PATTERNS = "CWLFA*,CWLFB*W,CWLFC0001I";
+    private static final String GOOD_PATTERNS = "CWLFA*,CWLFB*W,CWLFC0001I,*E";
 
     /**
      * Invalid patterns in the mixed server. Must match the routerThing value in
      * WsLogHandlerMixedWildcardServer/server.xml.
      */
-    private static final String[] BAD_PATTERNS = { "CWLFD*K", "CWLFE**" };
+    private static final String[] BAD_PATTERNS = { "CWLFD*K", "CWLFE**", "*X" };
 
     /**
      * Valid patterns in WsLogHandlerWildcardServer/server.xml, kept by the dynamic update.
@@ -164,7 +171,7 @@ public class WsLogHandlerInvalidWildcardTest extends WsLogHandlerBaseTest {
      * satisfy the check for {@code CWK**}.
      */
     private static String warningRegex(String pattern) {
-        return "CWWKE0710W: The wildcard message ID for " + pattern.replace("*", "\\*") + " is invalid";
+        return "CWWKE0710W: The wildcard message ID " + pattern.replace("*", "\\*") + " is not valid";
     }
 
     /**
@@ -224,12 +231,17 @@ public class WsLogHandlerInvalidWildcardTest extends WsLogHandlerBaseTest {
                 + "CWLFA0001I: Test component alpha started successfully.,"
                 + "CWLFB0005W: Test component beta potential bottleneck detected.,"
                 + "CWLFC0001I: Test component charlie exact ID message.,"
+                // Routed: matches the valid level-only pattern *E, with a prefix that is not configured anywhere
+                + "CWLFQ0001E: Test component quebec error matches the valid level-only pattern.,"
                 // Not routed: right prefix but wrong level / different exact ID
                 + "CWLFB0001I: Test component beta info does not match the warning-only pattern.,"
                 + "CWLFC0002I: Test component charlie other ID does not match the exact ID.,"
-                // Not routed: would match CWLFD*K / CWLFE** if those invalid patterns had been accepted
-                + "CWLFD0001E: Test component delta must not route because its pattern is invalid.,"
-                + "CWLFE0001I: Test component echo must not route because its pattern is invalid.";
+                // Not routed: INFO does not match the level-only pattern *E
+                + "CWLFQ0002I: Test component quebec info does not match the level-only pattern.,"
+                // Not routed: would match CWLFD*K / CWLFE** / *X if those invalid patterns had been accepted
+                + "CWLFD0001I: Test component delta must not route because its pattern is invalid.,"
+                + "CWLFE0001I: Test component echo must not route because its pattern is invalid.,"
+                + "CWLFQ0003X: Test component quebec must not route because the level-only pattern is invalid.";
         assertEquals("Emit should return 200", 200, postForm("/wsLogHandler/emit/text", emitBody));
 
         // 3. Only messages matching the valid patterns were captured.
@@ -239,7 +251,7 @@ public class WsLogHandlerInvalidWildcardTest extends WsLogHandlerBaseTest {
 
         // 4. None of the filtered messages were captured.
         assertEquals("verifyAbsent should return 200 (PASSED) - messages for invalid patterns and non-matching IDs must not be routed",
-                     200, getStatus("/wsLogHandler/verifyAbsent?patterns=CWLFD*,CWLFE*,CWLFB*I,CWLFC0002I"));
+                     200, getStatus("/wsLogHandler/verifyAbsent?patterns=CWLFD*,CWLFE*,CWLFB*I,CWLFC0002I,CWLFQ0002I,CWLFQ0003X"));
     }
 
     /**

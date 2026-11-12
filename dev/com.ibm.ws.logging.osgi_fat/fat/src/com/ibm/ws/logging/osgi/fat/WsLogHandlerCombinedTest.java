@@ -32,7 +32,8 @@ import componenttest.topology.impl.LibertyServer;
 
 /**
  * FAT tests verifying combined usage of exact message IDs and wildcard patterns
- * in the same routing configuration using synthetic message IDs following the
+ * (both {@code <prefix>*[<level>]} and level-only {@code *<level>}) in the same
+ * routing configuration using synthetic message IDs following the
  * standard Liberty syntax (CW prefix, alphabetic component code, numeric suffix,
  * and log level letter).
  *
@@ -178,17 +179,17 @@ public class WsLogHandlerCombinedTest extends WsLogHandlerBaseTest {
         server.setMarkToEndOfLog();
         server.setServerConfigurationFile("wsLogHandler/server-combinedUpdate.xml");
         server.waitForConfigUpdateInLogUsingMark(Collections.<String> emptySet(),
-                "CWWKE0710W: The wildcard message ID for CWLFN\\*\\* is invalid",
-                "CWWKE0710W: The wildcard message ID for CWLFO\\*Z is invalid");
+                "CWWKE0710W: The wildcard message ID CWLFN\\*\\* is not valid",
+                "CWWKE0710W: The wildcard message ID CWLFO\\*Z is not valid");
 
         // 3. Verify exactly one CWWKE0710W warning was emitted for each invalid pattern,
         //    and that no warning was emitted for any of the valid patterns.
         List<String> warningsNN = server.findStringsInLogs(
-                "CWWKE0710W: The wildcard message ID for CWLFN\\*\\* is invalid");
+                "CWWKE0710W: The wildcard message ID CWLFN\\*\\* is not valid");
         List<String> warningsOZ = server.findStringsInLogs(
-                "CWWKE0710W: The wildcard message ID for CWLFO\\*Z is invalid");
-        assertEquals("Expected exactly one CWWKE0710W for CWLFN**", 1, warningsNN.size());
-        assertEquals("Expected exactly one CWWKE0710W for CWLFO*Z", 1, warningsOZ.size());
+                "CWWKE0710W: The wildcard message ID CWLFO\\*Z is not valid");
+        assertEquals("Expected exactly one CWWKE0710W CWLFN**", 1, warningsNN.size());
+        assertEquals("Expected exactly one CWWKE0710W CWLFO*Z", 1, warningsOZ.size());
 
         // No warnings for any of the valid patterns.
         for (String validPattern : new String[] { "CWLFC*A", "CWLFD0003E", "CWLFE*W", "CWLFM0007I" }) {
@@ -266,5 +267,90 @@ public class WsLogHandlerCombinedTest extends WsLogHandlerBaseTest {
                              + "CWLFO*,"        // safe proxy for rejected CWLFO*Z pattern
                              + "CWLFP*,"        // unconfigured prefix
                              + "CWLFQ*"));      // unconfigured prefix
+    }
+
+    /**
+     * Verifies that a level-only wildcard ({@code *<level>}) works together with prefix wildcards,
+     * prefix+level wildcards and exact IDs, and that it can be added and swapped at runtime.
+     *
+     * <p>Initial {@code routerThing}: {@code CWLFA*,CWLFB0001I,CWLFC*A,CWLFD0003E}.<br>
+     * Update 1: {@code CWLFA*,CWLFB0001I,CWLFC*A,CWLFD0003E,*E} (adds {@code *E}).<br>
+     * Update 2: {@code CWLFA*,CWLFB0001I,CWLFD0003E,*A} (removes {@code *E} and {@code CWLFC*A}, adds {@code *A}).
+     *
+     * <p>The emit endpoint sends every listed message once, then {@code count} extra random picks
+     * from the list, and {@code count} is never less than 1. After update 1 the six routed
+     * messages therefore produce 6 or 7 captures. {@code CWLFD0003E} and {@code CWLFA0002E} each
+     * match two entries, so if overlapping entries delivered twice the count would be at least 8.
+     */
+    @Test
+    public void testDynamicUpdateToLevelOnlyWithPrefixAndExactIds() throws Exception {
+        Log.info(c, "testDynamicUpdateToLevelOnlyWithPrefixAndExactIds",
+                 "Adding then swapping level-only wildcards alongside prefix and exact ID entries");
+
+        // 1. Save server.xml so @After can restore it cleanly.
+        server.saveServerConfiguration();
+        configSaved = true;
+
+        // ---- Update 1: add *E ----
+        server.setMarkToEndOfLog();
+        server.setServerConfigurationFile("wsLogHandler/server-combinedLevelOnlyAddUpdate.xml");
+        server.waitForConfigUpdateInLogUsingMark(Collections.<String> emptySet());
+
+        assertEquals("Clear should return 200", 200, getStatus("/wsLogHandler/clear"));
+
+        String emitAdd = "count=1&messages="
+                // Routed: prefix*, exact ID, prefix*level
+                + "CWLFA0001I: Test component alpha matches the CWLFA* prefix wildcard.,"
+                + "CWLFB0001I: Test component beta matches the exact ID.,"
+                + "CWLFC0010A: Test component charlie matches CWLFC*A.,"
+                // Routed: *E alone, with a prefix that is not configured anywhere
+                + "CWLFZ0004E: Test component zulu error matches only *E.,"
+                // Routed once each: two entries match the same message
+                + "CWLFD0003E: Test component delta matches the exact ID and *E.,"
+                + "CWLFA0002E: Test component alpha error matches CWLFA* and *E.,"
+                // Not routed: non-matching ID or level
+                + "CWLFB0002I: Test component beta info is not the configured exact ID.,"
+                + "CWLFC0007W: Test component charlie warning does not match CWLFC*A.,"
+                + "CWLFX0001I: Test component xray unconfigured prefix.,"
+                + "CWLFZ0006W: Test component zulu warning does not match *E.";
+        assertEquals("Emit should return 200", 200, postForm("/wsLogHandler/emit/text", emitAdd));
+
+        assertEquals("Verify should return 200 (PASSED) - every pattern after update 1 must be captured and nothing else",
+                     200, getStatus("/wsLogHandler/verify?routerThing=CWLFA*,CWLFB0001I,CWLFC*A,CWLFD0003E,*E"));
+        int addCount = getCapturedCount();
+        assertTrue("Expected 6 or 7 captures (6 routed messages plus at most one extra random pick), but was "
+                   + addCount + " - overlapping entries must deliver a message once",
+                   addCount == 6 || addCount == 7);
+        assertEquals("verifyAbsent should return 200 (PASSED) - non-matching messages must not be routed after update 1",
+                     200, getStatus("/wsLogHandler/verifyAbsent?patterns=CWLFB0002I,CWLFC0007W,CWLFX0001I,CWLFZ0006W"));
+
+        // ---- Update 2: swap *E and CWLFC*A for *A ----
+        server.setMarkToEndOfLog();
+        server.setServerConfigurationFile("wsLogHandler/server-combinedLevelOnlySwapUpdate.xml");
+        server.waitForConfigUpdateInLogUsingMark(Collections.<String> emptySet());
+
+        assertEquals("Clear should return 200", 200, getStatus("/wsLogHandler/clear"));
+
+        String emitSwap = "count=1&messages="
+                // Routed: retained prefix* and exact ID
+                + "CWLFA0003I: Test component alpha still matches the CWLFA* prefix wildcard.,"
+                + "CWLFB0001I: Test component beta still matches the exact ID.,"
+                // Routed: the exact ID survives *E being removed
+                + "CWLFD0003E: Test component delta still matches the exact ID.,"
+                // Routed: CWLFC*A is gone, but *A now covers it
+                + "CWLFC0010A: Test component charlie audit is now matched by *A.,"
+                // Routed: *A alone, with a prefix that is not configured anywhere
+                + "CWLFY0009A: Test component yankee audit matches only *A.,"
+                // Not routed: *E was removed and only the exact CWLFD0003E remains for that prefix
+                + "CWLFZ0004E: Test component zulu error no longer matches after *E was removed.,"
+                + "CWLFD0005E: Test component delta error is not the configured exact ID.,"
+                + "CWLFB0002I: Test component beta info is not the configured exact ID.";
+        assertEquals("Emit should return 200", 200, postForm("/wsLogHandler/emit/text", emitSwap));
+
+        assertEquals("Verify should return 200 (PASSED) - every pattern after update 2 must be captured and nothing else",
+                     200, getStatus("/wsLogHandler/verify?routerThing=CWLFA*,CWLFB0001I,CWLFD0003E,*A"));
+        assertTrue("Captured count should be greater than 0", getCapturedCount() > 0);
+        assertEquals("verifyAbsent should return 200 (PASSED) - removed *E and non-matching messages must not be routed after update 2",
+                     200, getStatus("/wsLogHandler/verifyAbsent?patterns=CWLFZ0004E,CWLFD0005E,CWLFB0002I"));
     }
 }
