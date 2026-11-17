@@ -22,5 +22,6 @@ import org.junit.runners.Suite.SuiteClasses;
     WsLogHandlerWildcardTest.class,
     WsLogHandlerCombinedTest.class,
     WsLogHandlerInvalidWildcardTest.class,
+    WsTraceHandlerTest.class,
 })
 public class FATSuite {}

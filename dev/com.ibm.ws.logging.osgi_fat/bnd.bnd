@@ -17,7 +17,9 @@ bVersion=1.0
 
 src: \
 	fat/src,\
-	test-bundles/com.ibm.ws.logging.osgi.fat.wsloghandler/src
+	test-bundles/com.ibm.ws.logging.osgi.fat.wsloghandler/src,\
+	test-bundles/com.ibm.ws.logging.osgi.fat.wstracehandler/src,\
+	test-bundles/com.ibm.ws.logging.osgi.fat.traceemitter/src
 
 fat.project: true
 

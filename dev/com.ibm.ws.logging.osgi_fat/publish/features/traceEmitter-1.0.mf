@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Subsystem-ManifestVersion: 1
+IBM-ShortName: traceEmitter-1.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.traceEmitter-1.0; visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.ibm.ws.logging.osgi.fat.traceemitter; version="[1,1.1)"
+Subsystem-Type: osgi.subsystem.feature
+IBM-Feature-Version: 2

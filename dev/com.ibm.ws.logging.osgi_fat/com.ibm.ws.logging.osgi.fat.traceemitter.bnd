@@ -1,0 +1,29 @@
+#*******************************************************************************
+# Copyright (c) 2026 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License 2.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#     IBM Corporation - initial API and implementation
+#*******************************************************************************
+-include= ~../cnf/resources/bnd/bundle.props
+bVersion=1.0
+
+Bundle-Name: TraceEmitter FAT Test Bundle
+Bundle-Description: FAT test bundle that emits traces at activation, used to test the WsTraceRouter earlierTraces buffer; version=${bVersion}
+Bundle-SymbolicName: com.ibm.ws.logging.osgi.fat.traceemitter; singleton:=true
+
+Private-Package: \
+    com.ibm.ws.logging.osgi.fat.traceemitter
+
+-includeresource: \
+    OSGI-INF/permissions.perm=test-bundles/com.ibm.ws.logging.osgi.fat.traceemitter/resources/OSGI-INF/permissions.perm
+
+-dsannotations: \
+    com.ibm.ws.logging.osgi.fat.traceemitter.TraceEmitterService
+
+instrument.disabled: true

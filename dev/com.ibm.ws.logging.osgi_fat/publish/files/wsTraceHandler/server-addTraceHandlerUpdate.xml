@@ -1,0 +1,26 @@
+<!--
+    Copyright (c) 2026 IBM Corporation and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License 2.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+        IBM Corporation - initial API and implementation
+ -->
+<server description="TraceEmitter FAT Test Server - dynamic update adding wsTraceHandler-1.0">
+
+    <include location="../fatTestPorts.xml" />
+
+    <!-- Relative to TraceEmitterServer/server.xml: wsTraceHandler-1.0 is added. The trace
+         specification is unchanged so no additional traces are produced. -->
+    <featureManager>
+        <feature>traceEmitter-1.0</feature>
+        <feature>wsTraceHandler-1.0</feature>
+    </featureManager>
+
+    <logging traceSpecification="*=info:com.ibm.ws.logging.osgi.fat.traceemitter.*=all" />
+
+</server>
